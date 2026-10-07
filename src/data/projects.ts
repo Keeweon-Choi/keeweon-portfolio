@@ -1,0 +1,249 @@
+// 발표 문구의 source of truth: keeweon-portfolio-context/ (CONTEXT.md, content/*.md)
+// 문서에 없는 사실은 넣지 않는다. '*강조*' 표기는 파란색 강조로 렌더링된다.
+// 내부 수치는 공개하지 않는다 (Edge AI는 normalized, Smart Glass FPS만 공개 가능).
+import type { SectionId } from './sections'
+
+export type Tone = 'muted' | 'blue' | 'warn'
+
+export type JourneyItem = {
+  id: string
+  project: string
+  field: string
+  tagline: string
+  summary: string
+  section?: SectionId
+  current?: boolean
+  future?: boolean
+}
+
+export const journeyIntro = {
+  kicker: '다섯 개의 프로젝트, 하나의 질문',
+  question: '모델이 동작한 이후, *실제 환경*에서는 어떤 문제가 생길까?',
+  axis: { from: '모델', to: '실제 시스템' },
+  hint: '프로젝트를 선택하면 짧은 설명이 열립니다.',
+}
+
+export const journey: JourneyItem[] = [
+  {
+    id: 'pill',
+    project: 'Pill Identification',
+    field: 'Object Detection',
+    tagline: '모델을 실제 서비스로 연결하기',
+    summary: '이미지에서 알약을 인식하고, 사용자가 결과를 확인할 수 있는 서비스까지 연결해본 프로젝트입니다.',
+  },
+  {
+    id: 'edge-ai',
+    project: 'Undergraduate Research',
+    field: 'Edge AI',
+    tagline: '모델을 제한된 하드웨어에서 빠르게 실행하기',
+    summary: 'AI 모델을 제한된 하드웨어에서도 빠르고 안정적으로 실행하는 방법을 연구했습니다.',
+    section: 'edge-ai',
+  },
+  {
+    id: 'segmentation',
+    project: 'Internship',
+    field: 'Semantic Segmentation',
+    tagline: '환경을 더 세밀하게 이해하기',
+    summary: '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 선정했습니다.',
+    section: 'segmentation',
+  },
+  {
+    id: 'smart-glass',
+    project: 'Smart Glass',
+    field: 'Real-time AI System',
+    tagline: 'AI와 센서를 실제 사용자 시스템으로 연결하기',
+    summary: '시각장애인의 버스 승차부터 하차까지를 돕는 AI 기반 스마트글래스 시스템을 개발했습니다.',
+    section: 'smart-glass',
+  },
+  {
+    id: 'neus',
+    project: 'NEUS',
+    field: 'NLP / LLM',
+    tagline: '문제에 맞는 AI 기술로 서비스 만들기',
+    summary: '오랜 기간 함께해온 팀원들과 NLP와 LLM을 활용한 서비스 개발 경험을 넓히고 있습니다.',
+    section: 'neus',
+    current: true,
+  },
+  {
+    id: 'next',
+    project: 'Next',
+    field: 'Robotics / Physical AI',
+    tagline: 'Perception 경험을 로봇 시스템으로 확장하기',
+    summary: '카메라 기반 Perception과 Edge AI 경험을 로봇 시스템으로 확장해 더 깊게 공부하고 싶습니다.',
+    section: 'next',
+    future: true,
+  },
+]
+
+export const pill = {
+  point: 'Object Detection을 처음 실제 서비스와 연결해본 경험',
+  steps: [
+    { label: '문제', text: '이미지에서 알약을 인식하고, 결과를 확인할 수 있는 서비스', tone: 'muted' },
+    { label: '시도', text: 'Object Detection 모델을 모바일 기기에서 직접 실행', tone: 'muted' },
+    { label: '문제 발생', text: '실제 모바일 환경의 배포 · 실행 제약', tone: 'warn' },
+    { label: '해결', text: '서버 추론 + REST API 구조로 바꿔 End-to-End 서비스 완성', tone: 'blue' },
+  ] satisfies { label: string; text: string; tone: Tone }[],
+  lesson: '좋은 모델과 실제 배포 가능한 시스템은 다르다.',
+  screens: [
+    { src: 'images/pill-capture.png', caption: '알약 촬영', alt: '앱에서 알약을 촬영하는 화면' },
+    { src: 'images/pill-result.png', caption: '식별 결과', alt: '서버 추론 후 알약 탐지 결과가 표시된 앱 화면' },
+  ],
+}
+
+export const edgeAI = {
+  question: 'AI 모델을 *제한된 하드웨어*에서도 빠르게 실행할 수 있을까?',
+  problem:
+    '서버에서는 잘 동작하는 딥러닝 모델도, 임베디드 장치에서는 연산량과 메모리 제약 때문에 실시간 사용이 어려울 수 있습니다.',
+  did: [
+    { title: '실행 방식 변환', text: '동일한 모델을 여러 실행 방식으로 변환' },
+    { title: '연산 정밀도 실험', text: '연산 정밀도를 낮추는 최적화 방법 실험' },
+    { title: '실제 장치에서 비교', text: 'Edge device 위에서 처리 속도와 정확도를 함께 비교' },
+  ],
+  tech: ['ONNX', 'TensorRT', 'FP16', 'INT8'],
+  result: {
+    caption: 'Result — 처리 속도 (Baseline = 1.0×)',
+    // raw 수치 비공개: Baseline 대비 normalized 값만 표시
+    bars: [
+      { label: 'Baseline', value: 1, text: '1.0×' },
+      { label: 'Optimized', value: 5, text: '≈5×' },
+    ],
+    caveat: '단, 과도한 최적화에서는 정확도가 크게 떨어지는 경우도 확인했습니다.',
+  },
+  lesson: "최적화에서는 *'더 빠른가'*뿐 아니라 *'판단 성능이 유지되는가'*를 함께 봐야 한다.",
+  robotics: '로봇이나 임베디드 장치는 연산 자원이 제한되어, 알고리즘뿐 아니라 실제 하드웨어에서의 효율도 중요합니다.',
+}
+
+export const segmentation = {
+  title: 'Object Detection에서 *Scene Understanding*으로',
+  summary: '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 맞는 구조를 선정했습니다.',
+  compare: [
+    {
+      name: 'Object Detection',
+      question: '무엇이 어디에 있는가?',
+      unit: 'box 단위',
+      src: 'images/seg-detection.jpg',
+      alt: '고양이 사진에서 고양이 위치를 사각형 box로 표시한 예시',
+    },
+    {
+      name: 'Semantic Segmentation',
+      question: '각 영역이 무엇인가?',
+      unit: 'pixel 단위',
+      src: 'images/seg-mask.jpg',
+      alt: '같은 사진을 고양이, 잔디, 나무, 하늘 영역으로 색칠해 구분한 예시',
+    },
+  ],
+  credit: 'Figure: Stanford CS231n · photo CC0',
+  problem: '실제 시스템에서는 가장 정확한 모델이 항상 최선은 아니었습니다. 속도, 메모리, 하드웨어 제약을 함께 고려해야 했습니다.',
+  did: '여러 경량 Semantic Segmentation 구조를 동일 조건에서 구현 · 학습하고 비교했습니다.',
+  criteria: ['Accuracy', 'Speed', 'Resource usage'],
+  models: ['BiSeNetV2', 'Fast-SCNN', 'STDC', 'PP-LiteSeg', 'DeepLabV3+'],
+  result: '정확도와 처리 효율 사이의 균형이 좋은 구조를 선정하고 개선했습니다.',
+  lesson: '논문상의 최고 성능보다 *실제 사용 환경과 요구조건*을 함께 봐야 한다.',
+  robotics: '로봇이 주변을 이해할 때도, 객체를 찾는 것뿐 아니라 공간과 영역을 세밀하게 인식하는 것이 중요합니다.',
+}
+
+export const smartGlass = {
+  title: 'AI Model에서 *Real-time System*으로',
+  goal: '시각장애인의 버스 승차부터 하차까지를 돕는 AI 기반 스마트글래스 시스템',
+  usageLabel: '사용 흐름',
+  usage: [
+    { label: '버스 확인', en: 'Bus', icon: 'bus' },
+    { label: '승차문', en: 'Door', icon: 'door' },
+    { label: '카드단말기', en: 'Card reader', icon: 'card' },
+    { label: '빈 좌석', en: 'Seat', icon: 'seat' },
+    { label: '하차벨', en: 'Stop button', icon: 'bell' },
+  ] as const,
+  systemLabel: 'System flow',
+  system: [
+    { stage: '입력', label: 'Camera + Distance Sensor' },
+    { stage: '인식', label: 'Visual Perception / OCR' },
+    { stage: '판단', label: 'Decision' },
+    { stage: '피드백', label: 'Voice + Vibration' },
+  ],
+  role: 'Vision AI 기반 사용자 모듈 전담',
+  roleItems: ['카메라 기반 객체 인식', 'OCR', '거리 센서 연동', '진동 · 음성 피드백', 'Jetson 실시간 처리 파이프라인'],
+  roleNote: '버스 · 정류장 간 예약 · 통신 모듈은 다른 팀원 담당',
+  photos: {
+    worn: { src: 'images/smartglass-worn.jpg', alt: '스마트글래스 시제품을 착용한 모습', caption: '시제품 착용' },
+    hardware: {
+      src: 'images/smartglass-hardware.jpg',
+      alt: '안경 프레임에 카메라와 거리 센서를 부착한 시제품',
+      caption: 'Camera + Distance Sensor',
+    },
+  },
+}
+
+export type PipelineNode = { name: string; note?: string; tone?: Tone }
+
+export const redesign = {
+  states: [
+    {
+      tab: '초기 설계',
+      kicker: 'Initial Design',
+      title: '손으로 가리킨 대상을 인식하는 구조',
+      fps: '2–3',
+      lit: 2.5, // 1초 동안 처리한 프레임 시각화 (2–3 FPS)
+      input: [{ name: 'Camera' }] as PipelineNode[],
+      selector: { name: 'Hand Tracking', note: '사용자가 먼저 대상을 가리킴', tone: 'warn' } as PipelineNode,
+      modules: [{ name: 'Object Detection' }, { name: 'OCR' }] as PipelineNode[],
+      group: { label: '모두 동시 실행', note: 'CPU / GPU 병목', tone: 'warn' as Tone },
+      output: [{ name: 'Feedback' }] as PipelineNode[],
+      notesLabel: '실제 시스템에서 생긴 문제',
+      notes: ['여러 기능 동시 실행 → 처리 속도 저하', 'CPU / GPU 병목', '시각장애인이 먼저 목표를 가리켜야 하는 사용성 문제'],
+    },
+    {
+      tab: '재설계',
+      kicker: 'Redesign',
+      title: '현재 상황에서 *꼭 필요한 정보만* 처리하자',
+      fps: '15+',
+      lit: 15,
+      input: [{ name: 'Camera' }, { name: 'Distance Sensor' }] as PipelineNode[],
+      selector: { name: '현재 단계', note: '버스 → 승차문 → … → 하차벨', tone: 'blue' } as PipelineNode,
+      modules: [
+        { name: 'Object Detection', note: '단계별 필요한 class만' },
+        { name: 'OCR', note: '호출 주기 조정' },
+        { name: '최근 탐지 결과 유지' },
+      ] as PipelineNode[],
+      group: { label: '필요한 것만 실행', note: '해상도 · 기준값 조정', tone: 'blue' as Tone },
+      output: [{ name: 'Decision', note: 'Vision + 거리 센서' }, { name: 'Voice · Vibration' }] as PipelineNode[],
+      notesLabel: '바꾼 것',
+      notes: [
+        '단계별 필요한 객체만 탐지',
+        'OCR 호출 주기 조정',
+        '최근 탐지 결과 유지',
+        '작은 객체에 맞춰 해상도 · 기준값 조정',
+        '거리 센서와 Vision 결과 결합',
+      ],
+    },
+  ],
+  fpsLabel: 'FPS',
+  stripLabel: '1초 동안 처리하는 프레임',
+  lesson:
+    '모델 하나를 개선하는 것보다, *실제 사용 환경을 이해하고 시스템 구조 전체를 다시 설계하는 것*이 더 중요한 경우도 있었다.',
+}
+
+export const neus = {
+  status: '진행 중',
+  title: 'Current Project — *NEUS*',
+  intro: '최근에는 오랜 기간 함께해온 팀원들과 NEUS 프로젝트를 진행하며, NLP와 LLM을 활용한 서비스 개발 경험도 넓히고 있습니다.',
+  team: ['고교 시절부터 알고 지낸 팀원들', '자발적인 팀 프로젝트', '장기 협업'],
+  shift: {
+    beforeLabel: '지금까지',
+    before: ['Object Detection', 'Edge AI', 'Semantic Segmentation', 'Real-time AI System'],
+    beforeNote: 'Computer Vision 중심',
+    nowLabel: 'NEUS',
+    now: 'NLP / LLM',
+  },
+  // TODO(NEUS.md): 해결하려는 문제 · 핵심 기능 · 사용 기술을 detail에 채우면 화면에 한 줄씩 추가된다.
+  flow: [
+    { label: 'Problem', text: '풀어야 할 문제를 정의하고', detail: undefined as string | undefined },
+    { label: 'NLP / LLM', text: '문제에 맞는 기술을 선택해', detail: undefined as string | undefined },
+    { label: 'Product', text: '실제 서비스로 구현한다', detail: undefined as string | undefined },
+  ],
+  // TODO(NEUS.md): 주요 사용자 · 내가 맡은 역할 · 현재 구현 단계 — 확정되면 [label, value] 형태로 추가
+  facts: [] as [string, string][],
+  // TODO: NEUS logo/screenshot을 public/images/에 넣고 경로를 적으면 표시된다.
+  image: undefined as string | undefined,
+  message:
+    '특정 AI 분야에 한정되지 않고, *문제를 정의하고 필요한 기술을 선택해 실제 제품으로 구현하는 경험*을 넓히고 있습니다.',
+}

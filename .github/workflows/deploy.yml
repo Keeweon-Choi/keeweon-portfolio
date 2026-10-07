@@ -1,0 +1,58 @@
+name: CI / Deploy
+
+# main push → npm ci → lint → build → GitHub Pages 배포
+# Pull Request → npm ci → lint → build (배포 없음)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # PR은 새 커밋이 오면 이전 실행 취소, 배포는 진행 중인 것을 끊지 않는다
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      # build = tsc -b(typecheck) + vite build
+      # 프로젝트 사이트는 https://<user>.github.io/<repo>/ 이므로 repo 이름을 base path로 쓴다
+      - run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+
+      # 없는 경로로 들어와도 발표 페이지가 열리도록
+      - run: cp dist/index.html dist/404.html
+
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
