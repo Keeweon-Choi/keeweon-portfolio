@@ -44,7 +44,7 @@ export const journey: JourneyItem[] = [
     field: 'Semantic Segmentation',
     tagline: '환경을 더 세밀하게 이해하기',
     summary:
-      '현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 선정했습니다.',
+      '현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 개발했습니다.',
     section: 'segmentation',
   },
   {
@@ -116,7 +116,7 @@ export const edgeAI = {
 
 export const segmentation = {
   title: 'Object Detection에서 *Scene Understanding*으로',
-  summary: '현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 맞는 구조를 선정했습니다.',
+  summary: '현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 맞는 구조를 개발했습니다.',
   // 실제 주행 영상(Cityscapes) 위의 실시간 Semantic Segmentation 데모. 영상 = [카메라 | 예측] 좌우로 붙인 한 파일
   drive: {
     scenes: [
