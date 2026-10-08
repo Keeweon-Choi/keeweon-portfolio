@@ -102,12 +102,12 @@ export const edgeAI = {
   ],
   tech: ['ONNX', 'TensorRT', 'FP16', 'INT8'],
   result: {
-    caption: 'Result — 최적화 후 처리 속도 (최적화 전 = 1×)',
-    // raw 수치 비공개: 모델별로 최적화 전 대비 몇 배인지만 표시
-    baseline: '최적화 전',
-    bars: [
-      { label: 'ResNet101', value: 3 },
-      { label: 'YOLOX-nano', value: 5 },
+    caption: 'Result — 처리 속도 (각 모델의 원본 = 1×)',
+    // raw 수치 비공개: 모델마다 자기 원본 대비 몇 배인지만. 두 모델끼리는 비교하지 않는다
+    baseline: '원본',
+    models: [
+      { name: 'ResNet101', method: 'TensorRT · INT8 Quantization', label: 'INT8', value: 3 },
+      { name: 'YOLOX-nano', method: 'TensorRT · FP16 변환', label: 'FP16', value: 5 },
     ],
   },
   lesson: "최적화에서는 *'더 빠른가'*뿐 아니라 *'판단 성능이 유지되는가'*를 함께 봐야 한다.",

@@ -8,7 +8,7 @@ import { Label, TechDetail, Title } from '../components/ui'
 import { edgeAI as d } from '../data/projects'
 import { pad } from '../lib/util'
 
-const LAP = 3.5 // 레이스에서 최적화 전이 한 바퀴 도는 시간(초). 같은 시간에 모델별 배수만큼 돈다
+const LAP = 3.5 // 레이스에서 원본이 한 바퀴 도는 시간(초). 같은 시간에 최적화 모델은 배수만큼 돈다
 
 export function EdgeAI() {
   return (
@@ -52,7 +52,12 @@ export function EdgeAI() {
         <Reveal delay={0.15} className="lg:col-span-7">
           <div className="beam-border rounded-[6px] border border-line bg-canvas p-[clamp(1.5rem,4vh,2.75rem)]">
             <Label>{d.result.caption}</Label>
-            <SpeedBars />
+            {/* 두 모델은 서로 비교하지 않는다 → 각자 자기 원본 대비로 따로 */}
+            <div className="mt-5 grid gap-x-10 gap-y-8 sm:grid-cols-2 sm:divide-x sm:divide-line">
+              {d.result.models.map((m, i) => (
+                <ModelResult key={m.name} model={m} index={i} />
+              ))}
+            </div>
           </div>
         </Reveal>
       </div>
@@ -74,56 +79,71 @@ export function EdgeAI() {
   )
 }
 
+type Model = (typeof d.result.models)[number]
+
 /**
- * 모델별 최적화 전 대비 속도 (raw 수치 비공개). 화면에 들어오면 막대가 자라고 숫자가 1×부터 올라간다.
- * 막대 위 눈금 = 최적화 전(1×) 자리
+ * 한 모델의 결과: 원본(1×) vs 최적화(배수). 막대는 이 모델 안에서만의 비율이라 다른 모델과 눈금이 다르다.
+ * 화면에 들어오면 막대가 자라고 숫자가 1×부터 오른다. 그 아래 레이스: 원본 1바퀴 동안 최적화는 배수만큼
  */
-function SpeedBars() {
+function ModelResult({ model: m, index }: { model: Model; index: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, amount: 0.6 })
-  const max = Math.max(...d.result.bars.map((b) => b.value))
+  const rows = [
+    { label: d.result.baseline, value: 1 },
+    { label: m.label, value: m.value },
+  ]
   return (
-    <div
-      ref={ref}
-      className="mt-6 grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-[clamp(1.25rem,3.5vh,2rem)]"
-    >
-      {d.result.bars.map((b, i) => {
-        const best = b.value === max
-        return (
-          <Fragment key={b.label}>
-            <span className="font-mono text-note text-muted">{b.label}</span>
-            <span className="relative h-3 rounded-full bg-line/70">
+    <div ref={ref} className={index ? 'sm:pl-10' : ''}>
+      <p className="text-heading leading-tight font-semibold tracking-[-0.02em] text-ink">{m.name}</p>
+      <p className="mt-0.5 font-mono text-note text-muted">{m.method}</p>
+      <div className="mt-5 grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-[clamp(0.75rem,2.5vh,1.25rem)]">
+        {rows.map((r, i) => {
+          const fast = r.value > 1
+          return (
+            <Fragment key={r.label}>
+              <RowLabel text={r.label} />
+              <span className="h-3 rounded-full bg-line/70">
+                <span
+                  className={`block h-full rounded-full transition-[width] duration-[1300ms] ease-out ${fast ? 'bg-blue' : 'bg-faint'}`}
+                  style={{ width: inView ? `${(r.value / m.value) * 100}%` : '0%', transitionDelay: `${i * 180}ms` }}
+                />
+              </span>
               <span
-                className={`block h-full rounded-full transition-[width] duration-[1300ms] ease-out ${best ? 'bg-blue' : 'bg-blue/55'}`}
-                style={{ width: inView ? `${(b.value / max) * 100}%` : '0%', transitionDelay: `${i * 180}ms` }}
-              />
-              <span
-                aria-hidden
-                className="absolute -inset-y-1 w-0.5 rounded-full bg-ink/45"
-                style={{ left: `${(1 / max) * 100}%` }}
-              />
-            </span>
-            <span className="min-w-[2.6em] text-right text-title leading-[1.1] font-light tracking-[-0.03em] text-blue tabular-nums">
-              <Detect delay={1.4 + i * 0.2}>
-                <CountUp from={1} to={b.value} suffix="×" />
-              </Detect>
-            </span>
-          </Fragment>
-        )
-      })}
-      <Race start={inView} max={max} />
+                className={`min-w-[2.2em] text-right text-title leading-[1.1] font-light tracking-[-0.03em] tabular-nums ${
+                  fast ? 'text-blue' : 'text-faint'
+                }`}
+              >
+                {fast ? (
+                  <Detect delay={1.4}>
+                    <CountUp from={1} to={r.value} suffix="×" />
+                  </Detect>
+                ) : (
+                  '1×'
+                )}
+              </span>
+            </Fragment>
+          )
+        })}
+        <Race start={inView} rows={rows} />
+      </div>
     </div>
   )
 }
 
+/** mono 안의 한국어는 띄어쓰기가 듬성듬성해 보여서 한국어 라벨은 sans로 */
+const RowLabel = ({ text }: { text: string }) => (
+  <span className={`text-note text-muted ${/[가-힣]/.test(text) ? '' : 'font-mono'}`}>{text}</span>
+)
+
 /**
- * 막대가 다 자란 뒤의 레이스: 같은 트랙을 최적화 전이 1바퀴 도는 동안 ResNet101은 3바퀴, YOLOX-nano는 5바퀴.
- * 보이는 동안만 돈다. 모션 감소면 정적인 그림(모든 점이 결승선 · 1 / 3 / 5 laps).
+ * 막대가 다 자란 뒤의 레이스: 같은 트랙을 원본이 1바퀴 도는 동안 최적화 모델은 배수만큼 돈다.
+ * 보이는 동안만 돈다. 모션 감소면 정적인 그림(모든 점이 결승선 · 1 / n laps).
  * 막대와 같은 열에 맞추려고 부모 grid의 subgrid로 들어간다.
  */
-function Race({ start, max }: { start: boolean; max: number }) {
+function Race({ start, rows }: { start: boolean; rows: { label: string; value: number }[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const reduce = !!useReducedMotion()
+  const max = Math.max(...rows.map((r) => r.value))
   const [grown, setGrown] = useState(false)
   useEffect(() => {
     if (!start) return
@@ -132,23 +152,22 @@ function Race({ start, max }: { start: boolean; max: number }) {
   }, [start])
   const live = useLive(ref, 0.5)
   const t = useLoop(live && grown, LAP)
-  const [laps, setLaps] = useState(0) // 가장 빠른 레인 기준 바퀴 수
+  const [laps, setLaps] = useState(0) // 빠른 레인 기준 바퀴 수
   useMotionValueEvent(t, 'change', (v) => setLaps(Math.floor(v * max)))
   return (
     <div
       ref={ref}
       aria-hidden // 막대 수치의 시각적 반복이라 스크린리더에는 숨긴다
-      className="col-span-3 grid grid-cols-subgrid items-center gap-y-3 border-t border-dashed border-line pt-[clamp(0.75rem,2.5vh,1.5rem)]"
+      className="col-span-3 grid grid-cols-subgrid items-center gap-y-3 border-t border-dashed border-line pt-[clamp(0.75rem,2.5vh,1.25rem)]"
     >
-      {[{ label: d.result.baseline, value: 1 }, ...d.result.bars].map((b) => {
-        const best = b.value > 1 // 최적화한 모델은 꼬리가 붙는다
-        const n = reduce ? b.value : Math.floor((laps * b.value) / max)
+      {rows.map((r) => {
+        const fast = r.value > 1
+        const n = reduce ? r.value : Math.floor((laps * r.value) / max)
         return (
-          <Fragment key={b.label}>
-            {/* mono 안의 한국어는 띄어쓰기가 듬성듬성해 보여서 sans로 */}
-            <span className={`text-note text-muted ${/[가-힣]/.test(b.label) ? '' : 'font-mono'}`}>{b.label}</span>
-            <Lane t={t} speed={b.value} best={best} still={reduce} />
-            <span className={`text-right font-mono text-note tabular-nums ${best ? 'text-blue-deep' : 'text-muted'}`}>
+          <Fragment key={r.label}>
+            <RowLabel text={r.label} />
+            <Lane t={t} speed={r.value} best={fast} still={reduce} />
+            <span className={`text-right font-mono text-note tabular-nums ${fast ? 'text-blue-deep' : 'text-muted'}`}>
               {n} {n === 1 ? 'lap' : 'laps'}
             </span>
           </Fragment>
