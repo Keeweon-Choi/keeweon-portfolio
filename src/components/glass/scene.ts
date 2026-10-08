@@ -59,7 +59,7 @@ const C = {
   blue: 0x3d77a8,
   sky: 0x8ec9e8,
 }
-const motorAt = { x: 2.14, y: 0.1, z: 2.25 } // 귀 가까운 안경다리 바깥쪽
+const motorAt = { x: 2.14, y: 0.1, z: 0.42 } // 안경알 바로 옆: 다리가 접히는 경첩 뒤 바깥쪽(관자놀이)
 
 const physical = (color: number, extra: MeshPhysicalMaterialParameters = {}) =>
   new MeshPhysicalMaterial({ color, roughness: 0.32, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.15, ...extra })
@@ -189,7 +189,7 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
     mesh.position.set(s * motorAt.x, motorAt.y, motorAt.z)
     const ripples = rings(0.2)
     for (const r of ripples) {
-      r.rotation.x = Math.PI / 2 // 귀 둘레로 퍼지는 물결
+      r.rotation.x = Math.PI / 2 // 관자놀이 둘레로 퍼지는 물결
       r.position.copy(mesh.position)
     }
     model.add(rim, lens, hinge, temple, tip, mesh, ...ripples)
