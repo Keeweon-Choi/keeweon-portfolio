@@ -14,6 +14,7 @@ import { Chapter } from '../components/Chapter'
 import { Arrive, Beam } from '../components/fx/Beam'
 import { Tilt } from '../components/fx/Tilt'
 import { useCycle, useFlow, useLive, useLoop } from '../components/fx/loop'
+import { GlassGuide } from '../components/glass/GlassGuide'
 import { Reveal } from '../components/motion'
 import { Em, Label, TechDetail, Title } from '../components/ui'
 import { redesign as r, smartGlass as d, type PipelineNode, type Tone } from '../data/projects'
@@ -127,6 +128,9 @@ function Overview() {
           <Photo {...d.photos.worn} fit="object-top" delay={0} />
         </div>
       </div>
+
+      {/* 실제로 어떻게 안내하는지: 좌우 진동 모터를 단 3D 모형 + 카메라 화면 */}
+      <GlassGuide />
     </>
   )
 }

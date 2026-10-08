@@ -207,6 +207,34 @@ export const smartGlass = {
 
 export type PipelineNode = { name: string; note?: string; tone?: Tone }
 
+// 안경이 실제로 안내하는 방식 (예시 애니메이션). 사용자 시점 = 카메라 화면 정중앙(고정).
+// 박스가 중심의 어느 쪽에 있는지 → 그쪽 진동, 중심이 박스에 가까울수록 → 양쪽 진동이 강하게, 거리 → 음성(TTS).
+// 거리 기준값 · 진동 세기 수치 · 실제 음성 문장은 넣지 않는다. 목표가 나타나는 좌우(side)는 설명용 예시다.
+export const guide = {
+  label: 'How it guides',
+  heading: '방향은 *좌우 진동*으로, 거리는 *음성*으로',
+  text: '사용자의 시점은 카메라 화면의 정중앙에 고정됩니다. 지금 단계의 목표를 찾으면(YOLO 객체 탐지), 박스가 중심의 어느 쪽에 있는지는 진동으로, 거리는 음성으로 알려줍니다.',
+  legend: [
+    { key: '방향', to: '박스가 있는 쪽 진동', note: '박스가 화면 중심보다 왼쪽이면 왼쪽, 오른쪽이면 오른쪽 모터' },
+    { key: '중심에 가까울수록', to: '양쪽 진동이 강하게', note: '시점이 박스 중심에 가까워지면 양쪽이 함께, 맞춰지면 가장 강하게' },
+    { key: '거리', to: '음성 (TTS)', note: '카메라와 초음파 거리 센서로 판단한 거리를 음성으로 안내' },
+  ],
+  // smartGlass.usage와 같은 순서: 단계마다 찾는 목표
+  targets: [
+    { name: '버스', side: 'L' },
+    { name: '승차문', side: 'R' },
+    { name: '카드단말기', side: 'L' },
+    { name: '빈 좌석', side: 'R' },
+    { name: '하차벨', side: 'L' },
+  ] satisfies { name: string; side: 'L' | 'R' }[],
+  view: { label: 'Camera view', center: '시점 = 화면 중심' },
+  voice: '거리 음성 안내',
+  pins: { camera: 'Camera', sensor: 'Distance Sensor', L: 'Vibration L', R: 'Vibration R' },
+  hint: 'drag ⟲ 회전',
+  alt: '스마트글래스 3D 모형을 착용자 뒤에서 본 모습. 카메라 화면 중심(사용자 시점)보다 목표 박스가 왼쪽에 있으면 왼쪽, 오른쪽에 있으면 오른쪽 진동 모터가 울리고, 머리를 돌려 중심이 박스에 가까워질수록 양쪽 모터가 함께 더 강하게 진동한다. 맞춰지면 거리를 음성으로 안내하는 예시 애니메이션. 드래그해서 돌려볼 수 있다.',
+  note: '안내 방식을 보여주는 예시 애니메이션 (목표 위치 · 진동 세기 표현은 예시)',
+}
+
 export const redesign = {
   kicker: 'Redesign',
   heading: '2–3 FPS에서 *15 FPS+*로',
