@@ -129,20 +129,24 @@ export function Intro() {
                       </span>
                       <span className="mt-0.5 block text-note text-muted">{c.toc}</span>
                     </span>
-                    {preview ? (
-                      <span className="relative h-10 w-16 overflow-hidden rounded-[3px] border border-line bg-surface opacity-0 translate-x-2 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus:translate-x-0 group-focus:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100">
-                        <img
-                          src={asset(preview.src)}
-                          alt=""
-                          className={`size-full object-cover ${preview.position ?? ''}`}
-                        />
-                      </span>
-                    ) : (
+                    {/* 화살표는 항상, 미리보기가 있는 행은 hover/포커스 때 썸네일로 바뀐다 */}
+                    <span className="relative grid size-5 place-items-center">
                       <ArrowUpRight
                         aria-hidden
-                        className="relative size-5 text-faint transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue group-focus:translate-x-0.5 group-focus:-translate-y-0.5 group-focus:text-blue group-focus-visible:translate-x-0.5 group-focus-visible:-translate-y-0.5 group-focus-visible:text-blue"
+                        className={`size-5 text-faint transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue group-focus-visible:text-blue ${
+                          preview ? 'group-hover:opacity-0 group-focus-visible:opacity-0' : ''
+                        }`}
                       />
-                    )}
+                      {preview && (
+                        <span className="pointer-events-none absolute top-1/2 right-0 h-10 w-16 -translate-y-1/2 translate-x-2 overflow-hidden rounded-[3px] border border-line bg-surface opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100">
+                          <img
+                            src={asset(preview.src)}
+                            alt=""
+                            className={`size-full object-cover ${preview.position ?? ''}`}
+                          />
+                        </span>
+                      )}
+                    </span>
                   </a>
                 </motion.li>
               )
