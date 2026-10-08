@@ -330,7 +330,7 @@ function Story() {
           ))}
         </div>
         <div className="hidden lg:col-span-7 lg:block">
-          <div className="sticky top-[max(3rem,calc(50vh-14rem))]">
+          <div className="sticky top-[max(4.5rem,calc(50vh-23rem))]">
             <Panel state={r.story[active].state} onPick={pick} />
           </div>
         </div>
@@ -424,8 +424,8 @@ function Panel({ state, onPick }: { state: number; onPick?: (state: number) => v
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-4 grid items-end gap-x-6 gap-y-4 border-t border-line pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.72fr)]">
-        <div className="grid items-end gap-x-6 gap-y-3 sm:grid-cols-[auto_1fr]">
+      <div className="mt-3 grid items-end gap-x-6 gap-y-4 border-t border-line pt-3 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <div className="flex flex-col justify-end gap-4">
           <FpsNumber state={state} />
           <div>
             <FrameStrip key={state} state={state} live={live} />
