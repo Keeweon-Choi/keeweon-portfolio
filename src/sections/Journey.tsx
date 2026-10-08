@@ -112,26 +112,26 @@ function PillCase() {
           </li>
         ))}
       </ol>
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-6 border-t border-line pt-5">
-        <p className="max-w-[22em]">
-          <span className="block text-note font-medium text-muted">배운 점</span>
-          <span className="mt-1 block text-lead font-semibold tracking-[-0.01em] text-ink">{pill.lesson}</span>
-        </p>
-        <div className="flex items-center gap-3">
-          {pill.screens.map((s, i) => (
-            <div key={s.src} className="flex items-center gap-3">
-              {i > 0 && <ArrowRight aria-hidden className="size-4 text-faint" />}
-              <figure>
-                <img
-                  src={asset(s.src)}
-                  alt={s.alt}
-                  className="h-36 w-auto rounded-[6px] border border-line bg-surface"
-                />
-                <figcaption className="mt-1.5 text-center text-note text-muted">{s.caption}</figcaption>
-              </figure>
-            </div>
-          ))}
-        </div>
+      {/* 실제 앱 화면: 촬영 → 서버 추론 결과 */}
+      <div className="mt-6 flex items-center justify-center gap-[clamp(0.75rem,2vw,2rem)] border-t border-line pt-6">
+        {pill.screens.map((s, i) => (
+          <div key={s.src} className="flex min-w-0 items-center gap-[clamp(0.75rem,2vw,2rem)]">
+            {i > 0 && (
+              <span className="flex shrink-0 flex-col items-center gap-1 text-blue">
+                <ArrowRight aria-hidden className="size-5" />
+                <span className="text-[11px] whitespace-nowrap text-muted">서버 추론</span>
+              </span>
+            )}
+            <figure className="min-w-0">
+              <img
+                src={asset(s.src)}
+                alt={s.alt}
+                className="h-auto max-h-[clamp(16rem,40vh,26rem)] w-auto max-w-full rounded-[10px] border border-line bg-surface shadow-[0_12px_30px_-18px_rgba(23,35,49,0.35)]"
+              />
+              <figcaption className="mt-2 text-center text-note text-muted">{s.caption}</figcaption>
+            </figure>
+          </div>
+        ))}
       </div>
     </div>
   )

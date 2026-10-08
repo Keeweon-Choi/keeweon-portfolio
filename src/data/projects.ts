@@ -84,7 +84,6 @@ export const pill = {
     { label: '문제 발생', text: '실제 모바일 환경의 배포 · 실행 제약', tone: 'warn' },
     { label: '해결', text: '서버 추론 + REST API 구조로 바꿔 End-to-End 서비스 완성', tone: 'blue' },
   ] satisfies { label: string; text: string; tone: Tone }[],
-  lesson: '좋은 모델과 실제 배포 가능한 시스템은 다르다.',
   screens: [
     { src: 'images/pill-capture.png', caption: '알약 촬영', alt: '앱에서 알약을 촬영하는 화면' },
     { src: 'images/pill-result.png', caption: '식별 결과', alt: '서버 추론 후 알약 탐지 결과가 표시된 앱 화면' },
