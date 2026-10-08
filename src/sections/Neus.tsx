@@ -106,9 +106,12 @@ function Screens() {
             <motion.figure
               key={s.src}
               style={fan[col]}
-              className={center ? 'relative z-10 md:scale-[1.08]' : 'md:translate-x-(--fan-x) md:rotate-(--fan-r)'}
+              className={`group hover:z-20 ${center ? 'relative z-10 md:scale-[1.08]' : 'md:translate-x-(--fan-x) md:rotate-(--fan-r)'}`}
             >
-              <BrowserFrame src={s.src} alt={s.alt} url={d.url} />
+              {/* hover: 화면이 살짝 떠오르고 그림자가 깊어진다. 부채꼴 transform과 겹치지 않게 안쪽 div에서 */}
+              <div className="relative isolate transition-transform duration-300 ease-out after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:rounded-[10px] after:opacity-0 after:shadow-[0_36px_60px_-30px_rgba(23,35,49,0.5)] after:transition-opacity after:duration-300 group-hover:after:opacity-100 motion-safe:group-hover:-translate-y-2">
+                <BrowserFrame src={s.src} alt={s.alt} url={d.url} />
+              </div>
               <figcaption className="mt-2 text-center text-note text-muted">{s.caption}</figcaption>
             </motion.figure>
           )

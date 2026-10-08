@@ -1,5 +1,7 @@
-import { motion } from 'motion/react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { useRef } from 'react'
 import { Chapter } from '../components/Chapter'
+import { Tilt } from '../components/fx/Tilt'
 import { Reveal } from '../components/motion'
 import { profile } from '../data/profile'
 import { asset, ease } from '../lib/util'
@@ -13,12 +15,18 @@ const corners = [
 ]
 
 export function About() {
+  // 사진은 스크롤보다 살짝 느리게 흐른다 (±12px 패럴랙스)
+  const photoRef = useRef<HTMLElement>(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: photoRef, offset: ['start end', 'end start'] })
+  const y = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [-12, 12])
   return (
     <Chapter id="about" tone="surface">
       <div className="grid gap-x-16 gap-y-12 lg:grid-cols-12">
         <Reveal className="lg:col-span-4">
-          <figure className="mx-auto w-[min(100%,22rem)] lg:mx-0">
-            <div className="relative p-3">
+          {/* 캡션까지 같이 움직인다. useScroll은 offsetTop 기준이라 transform된 figure를 target으로 써도 된다 */}
+          <motion.figure ref={photoRef} style={{ y }} className="mx-auto w-[min(100%,22rem)] lg:mx-0">
+            <Tilt className="relative p-3">
               <img
                 src={asset(profile.photo)}
                 alt={`${profile.nameKo} 프로필 사진`}
@@ -35,12 +43,12 @@ export function About() {
                   transition={{ duration: 0.8, ease, delay: 0.2 }}
                 />
               ))}
-            </div>
+            </Tilt>
             <figcaption className="mt-1 flex justify-between px-3 font-mono text-note text-muted">
               <span>{profile.nameEn}</span>
               <span className="text-faint">CV · Edge AI</span>
             </figcaption>
-          </figure>
+          </motion.figure>
         </Reveal>
 
         <div className="lg:col-span-8">

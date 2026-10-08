@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import { motion, useScroll, useSpring } from 'motion/react'
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { useRef } from 'react'
 import { Chapter } from '../components/Chapter'
 import { Reveal } from '../components/motion'
@@ -8,11 +8,14 @@ import { journey, journeyIntro, pill, type JourneyItem } from '../data/projects'
 import { usePassed } from '../hooks/usePassed'
 import { asset, pad } from '../lib/util'
 
-/** 세로 타임라인: 스크롤한 만큼 선이 차오르고, 지나간 프로젝트의 점이 켜진다 */
+/** 세로 타임라인: 스크롤한 만큼 선이 차오르고(끝에 빛나는 점), 지나간 프로젝트의 점이 켜진다 */
 export function Journey() {
   const listRef = useRef<HTMLOListElement>(null)
   const { scrollYProgress } = useScroll({ target: listRef, offset: ['start 55%', 'end 55%'] })
   const fill = useSpring(scrollYProgress, { stiffness: 140, damping: 30, restDelta: 0.001 })
+  // 선 끝(트랙 높이의 fill%)을 따라가는 점. 시작 전에는 숨긴다
+  const headY = useTransform(fill, (v) => `${v * 100}%`)
+  const headOpacity = useTransform(fill, [0, 0.015], [0, 1])
 
   return (
     <Chapter id="journey">
@@ -31,6 +34,13 @@ export function Journey() {
           style={{ scaleY: fill }}
           className="absolute top-3 bottom-3 left-[11px] w-0.5 origin-top rounded-full bg-blue"
         />
+        <motion.span
+          aria-hidden
+          style={{ y: headY, opacity: headOpacity }}
+          className="pointer-events-none absolute top-3 bottom-3 left-[11px] w-0.5"
+        >
+          <span className="absolute top-0 left-1/2 size-3 -translate-1/2 rounded-full bg-blue shadow-[0_0_0_4px_rgba(142,201,232,0.5),0_0_16px_4px_rgba(61,119,168,0.35)]" />
+        </motion.span>
         {journey.map((j, i) => (
           <Stop key={j.id} item={j} index={i} />
         ))}
@@ -42,6 +52,7 @@ export function Journey() {
 function Stop({ item, index }: { item: JourneyItem; index: number }) {
   const ref = useRef<HTMLLIElement>(null)
   const passed = usePassed(ref)
+  const reduce = useReducedMotion()
   return (
     <li ref={ref} className="relative pb-[clamp(3rem,8vh,5rem)] pl-12 last:pb-0 sm:pl-16">
       <span
@@ -53,6 +64,15 @@ function Stop({ item, index }: { item: JourneyItem; index: number }) {
         <span
           className={`size-2.5 rounded-full bg-blue transition-transform duration-500 ${passed ? 'scale-100' : 'scale-0'}`}
         />
+        {/* 지나가는 순간 한 번 퍼지는 고리 */}
+        {passed && !reduce && (
+          <motion.span
+            className="absolute -inset-0.5 rounded-full border-2 border-blue"
+            initial={{ scale: 1, opacity: 0.7 }}
+            animate={{ scale: 2.6, opacity: 0 }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+          />
+        )}
       </span>
 
       <Reveal className="grid gap-x-12 gap-y-5 lg:grid-cols-12">
