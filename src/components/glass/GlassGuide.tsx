@@ -276,8 +276,10 @@ export function GlassGuide() {
             return (
               <li
                 key={l.key}
-                className={`flex gap-3 rounded-[6px] border px-4 py-3 transition-colors duration-300 ${
-                  on ? 'border-blue/50 bg-sky-wash' : 'border-line bg-surface'
+                className={`flex gap-3 rounded-[6px] border px-4 py-3 transition-[background-color,border-color,opacity,box-shadow] duration-300 ${
+                  on
+                    ? 'border-blue bg-sky-pale shadow-[0_10px_26px_-16px_rgba(43,95,140,0.7)] ring-1 ring-blue'
+                    : 'border-line bg-surface opacity-60'
                 }`}
               >
                 <Icon
@@ -306,11 +308,13 @@ export function GlassGuide() {
               <li
                 key={u.label}
                 aria-current={on ? 'step' : undefined}
-                className={`flex flex-col items-center gap-1 rounded-[6px] border px-1 py-2 text-center transition-colors duration-300 ${
-                  on ? 'border-blue/50 bg-sky-wash text-ink' : 'border-line text-muted'
+                className={`flex flex-col items-center gap-1 rounded-[6px] border px-1 py-2 text-center transition-[background-color,border-color,color,box-shadow,transform] duration-300 ${
+                  on
+                    ? 'scale-[1.04] border-blue bg-blue text-white shadow-[0_10px_24px_-12px_rgba(43,95,140,0.8)]'
+                    : 'border-line text-muted'
                 }`}
               >
-                <Icon aria-hidden className={`size-4 ${on ? 'text-blue' : 'text-faint'}`} strokeWidth={1.7} />
+                <Icon aria-hidden className={`size-4 ${on ? 'text-white' : 'text-faint'}`} strokeWidth={1.8} />
                 <span className="text-note leading-tight font-medium">{u.label}</span>
               </li>
             )
