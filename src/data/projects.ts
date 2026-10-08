@@ -18,7 +18,7 @@ export type JourneyItem = {
 
 export const journeyIntro = {
   kicker: '다섯 개의 프로젝트, 하나의 질문',
-  question: '모델이 동작한 이후, *실제 환경*에서는 어떤 문제가 생길까?',
+  question: '모델이 잘 동작해도, *실제 환경*에서는 어떤 문제가 생길까?',
   sub: '프로젝트를 거치며 관심이 모델 자체에서, 실제 환경에서 동작하는 시스템으로 넓어졌습니다.',
 }
 
@@ -44,7 +44,7 @@ export const journey: JourneyItem[] = [
     field: 'Semantic Segmentation',
     tagline: '환경을 더 세밀하게 이해하기',
     summary:
-      '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 선정했습니다.',
+      '현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 선정했습니다.',
     section: 'segmentation',
   },
   {
@@ -102,13 +102,13 @@ export const edgeAI = {
   ],
   tech: ['ONNX', 'TensorRT', 'FP16', 'INT8'],
   result: {
-    caption: 'Result — 처리 속도 (Baseline = 1.0×)',
-    // raw 수치 비공개: Baseline 대비 normalized 값만 표시
+    caption: 'Result — 최적화 후 처리 속도 (최적화 전 = 1×)',
+    // raw 수치 비공개: 모델별로 최적화 전 대비 몇 배인지만 표시
+    baseline: '최적화 전',
     bars: [
-      { label: 'Baseline', value: 1, text: '1.0×' },
-      { label: 'Optimized', value: 5, text: '≈5×' },
+      { label: 'ResNet101', value: 3 },
+      { label: 'YOLOX-nano', value: 5 },
     ],
-    caveat: '단, 과도한 최적화에서는 정확도가 크게 떨어지는 경우도 확인했습니다.',
   },
   lesson: "최적화에서는 *'더 빠른가'*뿐 아니라 *'판단 성능이 유지되는가'*를 함께 봐야 한다.",
   robotics: '로봇이나 임베디드 장치는 연산 자원이 제한되어, 알고리즘뿐 아니라 실제 하드웨어에서의 효율도 중요합니다.',
@@ -116,7 +116,7 @@ export const edgeAI = {
 
 export const segmentation = {
   title: 'Object Detection에서 *Scene Understanding*으로',
-  summary: '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 맞는 구조를 선정했습니다.',
+  summary: '현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 맞는 구조를 선정했습니다.',
   // 실제 주행 영상(Cityscapes) 위의 실시간 Semantic Segmentation 데모. 영상 = [카메라 | 예측] 좌우로 붙인 한 파일
   drive: {
     scenes: [
@@ -146,8 +146,8 @@ export const segmentation = {
   did: '여러 경량 Semantic Segmentation 구조를 동일 조건에서 구현 · 학습하고 비교했습니다.',
   criteria: ['Accuracy', 'Speed', 'Resource usage'],
   models: ['BiSeNetV2', 'Fast-SCNN', 'STDC', 'PP-LiteSeg', 'DeepLabV3+'],
-  result: '정확도와 처리 효율 사이의 균형이 좋은 구조를 선정하고 개선했습니다.',
-  lesson: '논문상의 최고 성능보다 *실제 사용 환경과 요구조건*을 함께 봐야 한다.',
+  result: '정확도와 처리 효율 사이의 균형이 좋은 모델을 개발했습니다.',
+  lesson: '*실제 사용 환경과 요구 조건*을 고려해서 개발해야 한다.',
   robotics: '로봇이 주변을 이해할 때도, 객체를 찾는 것뿐 아니라 공간과 영역을 세밀하게 인식하는 것이 중요합니다.',
 }
 
@@ -178,7 +178,7 @@ export const smartGlass = {
     parts: [
       { no: '①', label: '점자 키패드로 버스 예약' },
       { no: '②', label: '기사 알림' },
-      { no: '③', label: '정류장 진입 시 번호 음성 안내' },
+      { no: '③', label: '정류장 진입 시 번호 음성 안내', mine: true },
       { no: '④', label: 'Vision AI 기반 승하차 유도', mine: true },
     ],
   },

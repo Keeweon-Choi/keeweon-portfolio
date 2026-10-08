@@ -1,5 +1,5 @@
 import { animate, motion, useInView, useReducedMotion, type Variants } from 'motion/react'
-import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { ease } from '../lib/util'
 import { Em } from './ui'
 
@@ -80,33 +80,49 @@ const word: Variants = {
   }),
 }
 
+/** 띄어쓰기 단위 토큰 → 토큰마다 [글자, 강조 여부] 조각 ("실제 *환경*에서는" → 환경 · 에서는이 한 토큰) */
+function tokenize(text: string) {
+  const tokens: ({ space: string } | { parts: [string, boolean][] })[] = []
+  let on = false
+  for (const tok of text.split(/(\s+)/)) {
+    if (!tok) continue
+    if (/^\s+$/.test(tok)) {
+      tokens.push({ space: tok })
+      continue
+    }
+    const parts: [string, boolean][] = []
+    const segs = tok.split('*')
+    for (let j = 0; j < segs.length; j++) {
+      if (j > 0) on = !on
+      if (segs[j]) parts.push([segs[j], on])
+    }
+    tokens.push({ parts })
+  }
+  return tokens
+}
+
 /**
  * 핵심 문장 전용: 화면에 들어오면 단어가 앞에서부터 차례로 또렷해진다 (샘플 C의 text generate).
- * *강조*는 Em과 같은 파란색. 모션 감소면 그냥 글자로.
+ * *강조*는 Em과 같은 파란색. 강조가 단어 안에서 끝나도("환경*에서는") 한 단어로 붙어 있다.
+ * 모션 감소면 그냥 글자로.
  */
 export function Words({ text }: { text: string }) {
   const reduce = useReducedMotion()
   if (reduce) return <Em text={text} />
   let n = 0
-  const words = (part: string) =>
-    part.split(/(\s+)/).map((w, i) =>
-      /^\s*$/.test(w) ? (
-        w
-      ) : (
-        <motion.span key={i} className="inline-block" variants={word} custom={n++}>
-          {w}
-        </motion.span>
-      ),
-    )
   return (
     <motion.span initial="hidden" whileInView="shown" viewport={{ once: true, amount: 0.6 }}>
-      {text.split('*').map((part, i) =>
-        i % 2 ? (
-          <em key={i} className={`text-blue not-italic ${part.length <= 16 ? 'whitespace-nowrap' : ''}`}>
-            {words(part)}
-          </em>
+      {tokenize(text).map((t, i) =>
+        'space' in t ? (
+          t.space
         ) : (
-          <Fragment key={i}>{words(part)}</Fragment>
+          <motion.span key={i} className="inline-block" variants={word} custom={n++}>
+            {t.parts.map(([part, on], j) => (
+              <span key={j} className={on ? 'text-blue' : undefined}>
+                {part}
+              </span>
+            ))}
+          </motion.span>
         ),
       )}
     </motion.span>

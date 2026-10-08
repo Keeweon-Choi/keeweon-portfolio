@@ -56,7 +56,7 @@ function Overview() {
         </Reveal>
       </div>
 
-      {/* 시스템 개요: ①–③은 팀원 담당(예약 · 통신), ④가 내 담당(스마트글래스) */}
+      {/* 시스템 개요: ①②는 팀원 담당(예약 · 통신), ③④가 내 담당(스마트글래스: 번호 음성 안내 포함) */}
       <Reveal className="mt-[clamp(2rem,6vh,3.5rem)]">
         <figure className="mx-auto max-w-[min(100%,calc(78vh*1464/807))] overflow-hidden rounded-[8px] border border-line bg-surface">
           <img
@@ -65,14 +65,14 @@ function Overview() {
             className="block aspect-[1464/807] w-full object-cover"
           />
           <figcaption className="grid gap-x-6 gap-y-2 border-t border-line px-5 py-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            {d.overview.parts.map((part) => (
+            {d.overview.parts.map((part, i) => (
               <span
                 key={part.no}
                 className={`flex items-center gap-2 text-note ${part.mine ? 'font-semibold text-blue-deep' : 'text-muted'}`}
               >
                 <span className="font-mono">{part.no}</span>
                 {part.label}
-                {part.mine && (
+                {part.mine && i === d.overview.parts.length - 1 && (
                   <span className="rounded-full bg-blue px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-white uppercase">
                     My Role
                   </span>

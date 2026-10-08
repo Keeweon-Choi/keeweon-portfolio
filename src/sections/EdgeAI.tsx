@@ -8,7 +8,7 @@ import { Label, TechDetail, Title } from '../components/ui'
 import { edgeAI as d } from '../data/projects'
 import { pad } from '../lib/util'
 
-const LAP = 3.5 // 레이스에서 Baseline이 한 바퀴 도는 시간(초). 같은 시간에 Optimized는 ≈5바퀴
+const LAP = 3.5 // 레이스에서 최적화 전이 한 바퀴 도는 시간(초). 같은 시간에 모델별 배수만큼 돈다
 
 export function EdgeAI() {
   return (
@@ -53,10 +53,6 @@ export function EdgeAI() {
           <div className="beam-border rounded-[6px] border border-line bg-canvas p-[clamp(1.5rem,4vh,2.75rem)]">
             <Label>{d.result.caption}</Label>
             <SpeedBars />
-            <p className="mt-6 flex items-start gap-3 border-t border-line pt-5 text-body text-ink-soft">
-              <span aria-hidden className="mt-[0.55em] size-2 shrink-0 rounded-full bg-warn" />
-              {d.result.caveat}
-            </p>
           </div>
         </Reveal>
       </div>
@@ -78,7 +74,10 @@ export function EdgeAI() {
   )
 }
 
-/** Baseline 대비 normalized 속도 막대 (raw 수치 비공개). 화면에 들어오면 막대가 자라고 숫자가 올라간다 */
+/**
+ * 모델별 최적화 전 대비 속도 (raw 수치 비공개). 화면에 들어오면 막대가 자라고 숫자가 1×부터 올라간다.
+ * 막대 위 눈금 = 최적화 전(1×) 자리
+ */
 function SpeedBars() {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, amount: 0.6 })
@@ -86,31 +85,28 @@ function SpeedBars() {
   return (
     <div
       ref={ref}
-      className="mt-6 grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-[clamp(0.75rem,2.5vh,1.5rem)]"
+      className="mt-6 grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-[clamp(1.25rem,3.5vh,2rem)]"
     >
       {d.result.bars.map((b, i) => {
         const best = b.value === max
         return (
           <Fragment key={b.label}>
             <span className="font-mono text-note text-muted">{b.label}</span>
-            <span className="h-3 rounded-full bg-line/70">
+            <span className="relative h-3 rounded-full bg-line/70">
               <span
-                className={`block h-full rounded-full transition-[width] duration-[1300ms] ease-out ${best ? 'bg-blue' : 'bg-faint'}`}
+                className={`block h-full rounded-full transition-[width] duration-[1300ms] ease-out ${best ? 'bg-blue' : 'bg-blue/55'}`}
                 style={{ width: inView ? `${(b.value / max) * 100}%` : '0%', transitionDelay: `${i * 180}ms` }}
               />
+              <span
+                aria-hidden
+                className="absolute -inset-y-1 w-0.5 rounded-full bg-ink/45"
+                style={{ left: `${(1 / max) * 100}%` }}
+              />
             </span>
-            <span
-              className={`min-w-[2.6em] text-right text-title leading-[1.1] font-light tracking-[-0.03em] tabular-nums ${
-                best ? 'text-blue' : 'text-faint'
-              }`}
-            >
-              {best ? (
-                <Detect label="speed-up" delay={1.4}>
-                  <CountUp from={1} to={b.value} prefix="≈" suffix="×" />
-                </Detect>
-              ) : (
-                b.text
-              )}
+            <span className="min-w-[2.6em] text-right text-title leading-[1.1] font-light tracking-[-0.03em] text-blue tabular-nums">
+              <Detect delay={1.4 + i * 0.2}>
+                <CountUp from={1} to={b.value} suffix="×" />
+              </Detect>
             </span>
           </Fragment>
         )
@@ -121,8 +117,8 @@ function SpeedBars() {
 }
 
 /**
- * 막대가 다 자란 뒤의 레이스: 같은 트랙을 Baseline이 1바퀴 도는 동안 Optimized는 5바퀴 (≈5×를 눈으로).
- * 보이는 동안만 돈다. 모션 감소면 정적인 그림(두 점 모두 결승선 · 1 lap / 5 laps).
+ * 막대가 다 자란 뒤의 레이스: 같은 트랙을 최적화 전이 1바퀴 도는 동안 ResNet101은 3바퀴, YOLOX-nano는 5바퀴.
+ * 보이는 동안만 돈다. 모션 감소면 정적인 그림(모든 점이 결승선 · 1 / 3 / 5 laps).
  * 막대와 같은 열에 맞추려고 부모 grid의 subgrid로 들어간다.
  */
 function Race({ start, max }: { start: boolean; max: number }) {
@@ -144,12 +140,13 @@ function Race({ start, max }: { start: boolean; max: number }) {
       aria-hidden // 막대 수치의 시각적 반복이라 스크린리더에는 숨긴다
       className="col-span-3 grid grid-cols-subgrid items-center gap-y-3 border-t border-dashed border-line pt-[clamp(0.75rem,2.5vh,1.5rem)]"
     >
-      {d.result.bars.map((b) => {
-        const best = b.value === max
+      {[{ label: d.result.baseline, value: 1 }, ...d.result.bars].map((b) => {
+        const best = b.value > 1 // 최적화한 모델은 꼬리가 붙는다
         const n = reduce ? b.value : Math.floor((laps * b.value) / max)
         return (
           <Fragment key={b.label}>
-            <span className="font-mono text-note text-muted">{b.label}</span>
+            {/* mono 안의 한국어는 띄어쓰기가 듬성듬성해 보여서 sans로 */}
+            <span className={`text-note text-muted ${/[가-힣]/.test(b.label) ? '' : 'font-mono'}`}>{b.label}</span>
             <Lane t={t} speed={b.value} best={best} still={reduce} />
             <span className={`text-right font-mono text-note tabular-nums ${best ? 'text-blue-deep' : 'text-muted'}`}>
               {n} {n === 1 ? 'lap' : 'laps'}

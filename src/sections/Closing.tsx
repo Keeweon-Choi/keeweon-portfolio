@@ -10,7 +10,6 @@ export function Closing() {
           <Reveal className="lg:col-span-8">
             <p className="font-mono text-note tracking-[0.14em] text-white/80 uppercase">{closing.en}</p>
             <h2 className="mt-4 text-display font-bold tracking-[-0.045em]">{closing.title}</h2>
-            <p className="mt-[clamp(1rem,3vh,2rem)] text-lead text-white/90">{closing.note}</p>
           </Reveal>
           <Reveal delay={0.15} className="lg:col-span-4">
             <a
