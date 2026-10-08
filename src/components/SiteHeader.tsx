@@ -30,26 +30,34 @@ export function SiteHeader({ active }: { active: ChapterId | null }) {
           href="#top"
           className="group flex shrink-0 items-center gap-2.5 rounded-sm text-body font-semibold tracking-[-0.01em] text-ink"
         >
-          {/* 로고: 탐지 박스(네 모서리)가 렌즈를 잡은 모양 — Computer Vision. hover면 모서리가 조여든다 */}
+          {/* 로고: 이니셜 K를 포즈 · 손 추적의 관절 골격(keypoint)으로. hover면 관절이 커지며 추적하듯 */}
           <svg aria-hidden viewBox="0 0 32 32" className="size-7 shrink-0">
-            <defs>
-              <linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#3d77a8" />
-                <stop offset="1" stopColor="#2b5f8c" />
-              </linearGradient>
-            </defs>
-            <rect width="32" height="32" rx="8" fill="url(#logo-bg)" />
-            <path
-              d="M8 12.5V8h4.5M19.5 8H24v4.5M24 19.5V24h-4.5M12.5 24H8v-4.5"
-              fill="none"
-              stroke="#fff"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="origin-center transition-transform duration-300 ease-out group-hover:scale-[0.84]"
+            <rect width="32" height="32" rx="9" fill="#172331" />
+            <path d="M11 8v16M11 16.5 21.5 8M11 16.5 22 24" fill="none" stroke="#e8f1f8" strokeWidth="1.9" strokeLinecap="round" />
+            {[
+              [11, 8],
+              [11, 24],
+              [21.5, 8],
+              [22, 24],
+            ].map(([cx, cy]) => (
+              <circle
+                key={`${cx}-${cy}`}
+                cx={cx}
+                cy={cy}
+                r="2.1"
+                fill="#8ec9e8"
+                className="origin-center transition-transform duration-300 [transform-box:fill-box] group-hover:scale-150"
+              />
+            ))}
+            <circle
+              cx="11"
+              cy="16.5"
+              r="2.6"
+              fill="#3d77a8"
+              stroke="#e8f1f8"
+              strokeWidth="1.2"
+              className="origin-center transition-transform duration-300 [transform-box:fill-box] group-hover:scale-125"
             />
-            <circle cx="16" cy="16" r="3.4" fill="#8ec9e8" className="origin-center transition-transform duration-300 group-hover:scale-125" />
-            <circle cx="17.2" cy="14.8" r="1" fill="#fff" />
           </svg>
           {profile.nameKo}
           <span className="hidden font-normal text-muted sm:inline">{profile.nameEn}</span>
