@@ -2,8 +2,22 @@ import { useInView, useReducedMotion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { asset } from '../lib/util'
 
-/** 짧은 시연 영상 반복. 보이는 동안만 재생 (모션 감소면 포스터 한 장) */
-export function Clip({ src, poster, alt, fit = 'object-cover' }: { src: string; poster: string; alt: string; fit?: string }) {
+/** 짧은 시연 영상 반복. 보이는 동안만 재생 (모션 감소면 포스터 한 장). controls면 소리 · 멈춤을 직접 */
+export function Clip({
+  src,
+  poster,
+  alt,
+  fit = 'object-cover',
+  aspect = 'aspect-video',
+  controls = false,
+}: {
+  src: string
+  poster: string
+  alt: string
+  fit?: string
+  aspect?: string
+  controls?: boolean
+}) {
   const ref = useRef<HTMLVideoElement>(null)
   const visible = useInView(ref, { amount: 0.4 })
   const reduce = useReducedMotion()
@@ -22,8 +36,9 @@ export function Clip({ src, poster, alt, fit = 'object-cover' }: { src: string; 
       loop
       playsInline
       preload="auto"
+      controls={controls}
       aria-label={alt}
-      className={`block aspect-video w-full bg-ink ${fit}`}
+      className={`block w-full bg-ink ${aspect} ${fit}`}
     />
   )
 }

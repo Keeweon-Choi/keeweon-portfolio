@@ -237,6 +237,14 @@ export const smartGlass = {
   gap: '그래서 탑승 순간에서 끝나지 않고, *승차 – 결제 – 착석 – 하차*를 하나의 안내 흐름으로 설계했습니다.',
   tech: ['Jetson Orin Nano', 'YOLO11', 'EasyOCR', 'MediaPipe Hands', 'HC-SR04P', 'TTS'],
   awards: ['한국ITS학회 2025 추계학술대회 학부논문경진대회 우수상', '탄소중립 INNOVATION ACADEMY 대상'],
+  // 종합설계 최종 발표 데모의 실사용 부분 (왼쪽 착용 모습 · 오른쪽 안경 카메라 화면, 영상 속 인물 = 본인)
+  demo: {
+    label: '실제 사용 영상',
+    src: 'media/glass-demo.mp4',
+    poster: 'media/glass-demo.jpg',
+    alt: '스마트글래스를 쓰고 버스를 타는 실제 시연: 버스 번호, 승차문과 카드단말기, 빈 좌석, 하차벨을 차례로 인식하고 초음파 거리를 함께 표시하는 카메라 화면',
+    caption: '안경 카메라 화면과 착용 모습 — 버스 번호 → 승차문 · 카드단말기 → 빈 좌석 → 하차벨 (STEP = 현재 단계, ULTRA = 초음파 거리 · 소리는 영상의 스피커 버튼으로)',
+  },
   photos: {
     worn: { src: 'images/smartglass-worn.jpg', alt: '스마트글래스 시제품을 착용한 모습', caption: '시제품 착용' },
     hardware: {

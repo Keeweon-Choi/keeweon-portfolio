@@ -146,6 +146,17 @@ function Overview() {
       </div>
 
       {/* 실제로 어떻게 안내하는지: 좌우 진동 모터를 단 3D 모형 + 카메라 화면 */}
+      {/* 실제 사용 영상: 단계별 인식이 현장에서 그대로 돈다 */}
+      <Reveal className="mt-[clamp(3rem,8vh,4.5rem)]">
+        <Label>{d.demo.label}</Label>
+        <figure className="mx-auto mt-4 max-w-[min(100%,calc(78vh*1280/546))]">
+          <div className="overflow-hidden rounded-[8px] border border-line bg-ink">
+            <Clip src={d.demo.src} poster={d.demo.poster} alt={d.demo.alt} aspect="aspect-[1280/546]" fit="object-contain" controls />
+          </div>
+          <figcaption className="mt-2 text-note text-muted">{d.demo.caption}</figcaption>
+        </figure>
+      </Reveal>
+
       <GlassGuide />
     </>
   )
