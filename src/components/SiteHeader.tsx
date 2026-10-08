@@ -28,14 +28,29 @@ export function SiteHeader({ active }: { active: ChapterId | null }) {
       <div className="mx-auto flex h-14 max-w-page items-center gap-6">
         <a
           href="#top"
-          className="flex shrink-0 items-center gap-2.5 rounded-sm text-body font-semibold tracking-[-0.01em] text-ink"
+          className="group flex shrink-0 items-center gap-2.5 rounded-sm text-body font-semibold tracking-[-0.01em] text-ink"
         >
-          <span
-            aria-hidden
-            className="grid size-7 place-items-center rounded-md bg-blue font-mono text-[12px] font-bold text-white"
-          >
-            KC
-          </span>
+          {/* 로고: 탐지 박스(네 모서리)가 렌즈를 잡은 모양 — Computer Vision. hover면 모서리가 조여든다 */}
+          <svg aria-hidden viewBox="0 0 32 32" className="size-7 shrink-0">
+            <defs>
+              <linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#3d77a8" />
+                <stop offset="1" stopColor="#2b5f8c" />
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="8" fill="url(#logo-bg)" />
+            <path
+              d="M8 12.5V8h4.5M19.5 8H24v4.5M24 19.5V24h-4.5M12.5 24H8v-4.5"
+              fill="none"
+              stroke="#fff"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="origin-center transition-transform duration-300 ease-out group-hover:scale-[0.84]"
+            />
+            <circle cx="16" cy="16" r="3.4" fill="#8ec9e8" className="origin-center transition-transform duration-300 group-hover:scale-125" />
+            <circle cx="17.2" cy="14.8" r="1" fill="#fff" />
+          </svg>
           {profile.nameKo}
           <span className="hidden font-normal text-muted sm:inline">{profile.nameEn}</span>
         </a>
