@@ -55,6 +55,7 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       ctx.fillStyle = color
       ctx.fillRect(tx, ty, w, h)
       text(value, tx + 6, ty + size + 1, '#101b27', size)
+      return { x: tx, y: ty, w, h }
     }
 
     const bracket = (x: number, y: number, dx: number, dy: number) => {
@@ -103,43 +104,106 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       }
     }
 
-    const drawMotor = (label: 'L' | 'R', x: number, y: number, direction: -1 | 1, strength: number, color: string, time: number) => {
+    const drawMotorBadge = (
+      label: 'L' | 'R',
+      x: number,
+      y: number,
+      badgeW: number,
+      badgeH: number,
+      direction: -1 | 1,
+      strength: number,
+      color: string,
+      time: number,
+    ) => {
       const lit = strength > 0
-      const alpha = lit ? 0.36 + strength * 0.64 : 0.22
-      const pulse = lit ? 1 + strength * (0.07 + 0.09 * (0.5 + 0.5 * Math.sin(time * 14))) : 1
-      const size = Math.max(10, fontSize() * 0.93)
+      const segments = lit ? Math.max(1, Math.ceil(strength * 4)) : 0
+      const alpha = lit ? 0.72 + strength * 0.28 : 0.3
+      const pulseRate = 4 + strength * 12
+      const pulse = lit ? 0.68 + 0.32 * (0.5 + 0.5 * Math.sin(time * pulseRate)) : 0
+      const labelSize = Math.max(12, Math.min(15, badgeH * 0.32))
+      const meterX = x + 12
+      const meterY = y + badgeH - 13
+      const meterW = badgeW - 24
+      const meterGap = 4
+      const segmentW = (meterW - meterGap * 3) / 4
+      const outerX = direction < 0 ? x - 7 : x + badgeW + 7
+
       ctx.save()
-      ctx.globalAlpha = alpha
-      ctx.strokeStyle = lit ? color : 'rgba(207, 223, 235, 0.65)'
-      ctx.fillStyle = lit ? color : 'rgba(207, 223, 235, 0.65)'
-      ctx.lineWidth = 1.25 + strength * 0.7
-      text(label, x, y + 4, lit ? color : 'rgba(207, 223, 235, 0.65)', size, label === 'R' ? 'right' : 'left')
-      const bodyX = x + (label === 'L' ? 17 : -31)
-      ctx.strokeRect(bodyX, y - 7 * pulse, 14 * pulse, 13 * pulse)
+      ctx.lineWidth = lit ? 1.5 : 1.25
+      ctx.strokeStyle = lit ? color : 'rgba(207, 223, 235, 0.75)'
+      ctx.fillStyle = lit ? color : 'rgba(207, 223, 235, 0.025)'
       ctx.beginPath()
-      ctx.moveTo(bodyX + 14 * pulse, y - 3 * pulse)
-      ctx.lineTo(bodyX + 18 * pulse, y - 3 * pulse)
-      ctx.moveTo(bodyX + 14 * pulse, y + 2 * pulse)
-      ctx.lineTo(bodyX + 18 * pulse, y + 2 * pulse)
+      ctx.roundRect(x, y, badgeW, badgeH, 5)
+      ctx.globalAlpha = lit ? 0.1 + strength * 0.08 : 0.3
+      ctx.fill()
+      ctx.globalAlpha = alpha
       ctx.stroke()
-      const arcs = strength > 0.78 ? 3 : strength > 0.58 ? 2 : strength > 0 ? 1 : 0
-      for (let i = 0; i < arcs; i += 1) {
-        const offset = (i + 1) * 5 * direction
-        const arcX = direction < 0 ? bodyX - 2 + offset : bodyX + 16 * pulse + offset
-        ctx.beginPath()
-        ctx.arc(arcX, y - 0.5, 4 + i * 2, direction < 0 ? -Math.PI / 2 : Math.PI / 2, direction < 0 ? Math.PI / 2 : Math.PI * 1.5)
-        ctx.stroke()
+
+      const title = label === 'L' ? '◀  L' : 'R  ▶'
+      text(title, label === 'L' ? x + 12 : x + badgeW - 12, y + 18, lit ? color : 'rgba(207, 223, 235, 0.82)', labelSize, label === 'L' ? 'left' : 'right')
+      ctx.lineWidth = 1
+      for (let i = 0; i < 4; i += 1) {
+        const sx = meterX + i * (segmentW + meterGap)
+        ctx.strokeStyle = lit ? color : 'rgba(207, 223, 235, 0.7)'
+        ctx.globalAlpha = i < segments ? alpha : 0.27
+        if (i < segments) {
+          ctx.fillStyle = color
+          ctx.fillRect(sx, meterY, segmentW, 5)
+        } else {
+          ctx.strokeRect(sx, meterY, segmentW, 5)
+        }
+      }
+
+      if (lit) {
+        const arcs = strength > 0.76 ? 3 : strength > 0.48 ? 2 : 1
+        ctx.globalAlpha = alpha * (0.55 + pulse * 0.45)
+        ctx.lineWidth = 1.2 + strength * 0.8
+        ctx.strokeStyle = color
+        for (let i = 0; i < arcs; i += 1) {
+          const radius = 7 + i * 5 + pulse * 2
+          const arcX = outerX + direction * i * 2
+          ctx.beginPath()
+          ctx.arc(
+            arcX,
+            y + badgeH / 2,
+            radius,
+            direction < 0 ? -Math.PI * 0.62 : Math.PI * 0.38,
+            direction < 0 ? Math.PI * 0.62 : Math.PI * 1.62,
+          )
+          ctx.stroke()
+        }
       }
       ctx.restore()
     }
 
-    const drawMotorHud = (reference: Point, targetBox: Box, color: string, sensor: boolean, time: number) => {
+    const drawMotorHud = (reference: Point, targetBox: Box, color: string, time: number) => {
       const motors = motorState(reference, targetBox)
-      const baseY = height - 25
-      if (sensor) text('distance → voice  ▮▮▮▯▯', 11, height - 47, '#8ec9e8', fontSize())
-      text('vibration', width / 2, height - 45, 'rgba(207, 223, 235, 0.72)', fontSize(), 'center')
-      drawMotor('L', 12, baseY, -1, motors.left, color, time)
-      drawMotor('R', width - 13, baseY, 1, motors.right, color, time)
+      const badgeW = Math.max(96, Math.min(132, width * 0.22))
+      const badgeH = Math.max(42, Math.min(50, height * 0.13))
+      const xInset = Math.max(28, width * 0.045)
+      const y = height - badgeH - Math.max(25, height * 0.065)
+      drawMotorBadge('L', xInset, y, badgeW, badgeH, -1, motors.left, color, time)
+      drawMotorBadge('R', width - xInset - badgeW, y, badgeW, badgeH, 1, motors.right, color, time)
+    }
+
+    const drawReferenceTag = (reference: Point, targetBox: Box, value: string, color: string) => {
+      const size = fontSize()
+      ctx.font = '700 ' + size + 'px "JetBrains Mono Variable", monospace'
+      const tagW = ctx.measureText(value).width + 12
+      const tagH = size + 9
+      const blocked = { x: targetBox.x - 7, y: targetBox.y - tagH - 20, w: targetBox.w + 14, h: targetBox.h + tagH + 27 }
+      const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+      const candidates = [
+        { x: reference.x + 15, y: reference.y - tagH / 2 },
+        { x: reference.x - tagW - 15, y: reference.y - tagH / 2 },
+        { x: targetBox.x + targetBox.w + 48, y: reference.y - tagH / 2 },
+        { x: targetBox.x - tagW - 48, y: reference.y - tagH / 2 },
+        { x: reference.x + 10, y: reference.y - tagH - 15 },
+        { x: reference.x + 10, y: reference.y + 15 },
+        { x: targetBox.x + targetBox.w + 48, y: targetBox.y + targetBox.h + 10 },
+      ]
+      const candidate = candidates.find(({ x, y }) => !overlaps({ x, y, w: tagW, h: tagH }, blocked)) ?? candidates.at(-1)!
+      tag(candidate.x, candidate.y, value, color)
     }
 
     const drawReticle = (reference: Point) => {
@@ -154,7 +218,6 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       ctx.lineTo(reference.x, reference.y + 13)
       ctx.stroke()
       ctx.restore()
-      text('viewpoint', reference.x + 15, reference.y + 18, '#8ec9e8', fontSize())
     }
 
     const drawHand = (time: number, door: Box, stopped: boolean) => {
@@ -331,10 +394,12 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       if (slow) {
         reference = drawHand(time, detectedDoor, stopped)
         drawGuide(reference, centerOf(detectedDoor), '#e1be8a')
+        drawReferenceTag(reference, bus, 'fingertip', '#e1be8a')
       } else {
         reference = { x: width / 2, y: height / 2 }
         drawGuide(reference, centerOf(detectedDoor), '#8ec9e8')
         drawReticle(reference)
+        drawReferenceTag(reference, bus, 'viewpoint', '#8ec9e8')
       }
 
       const mono = fontSize()
@@ -343,8 +408,10 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       if (slow) {
         text('Hand Tracking · CPU', width - 11, 12 + mono, '#e3896d', mono, 'right')
         text('Object Detection · GPU', width - 11, 18 + mono * 2, '#e3896d', mono, 'right')
+      } else {
+        text('distance → voice  ▮▮▮▯▯', width - 11, 12 + mono, '#8ec9e8', mono, 'right')
       }
-      drawMotorHud(reference, detectedDoor, accent, !slow, time)
+      drawMotorHud(reference, detectedDoor, accent, time)
 
       ctx.strokeStyle = 'rgba(142, 201, 232, 0.6)'
       ctx.lineWidth = 1
@@ -391,13 +458,19 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
   const description = state === 0
     ? '초기 설계의 카메라 시뮬레이션: 검지 끝을 기준으로 문 중심이 왼쪽이면 왼쪽, 오른쪽이면 오른쪽 진동 모터가 안내하며, 가까워지면 양쪽 모터가 더 강하게 진동합니다.'
     : '재설계의 카메라 시뮬레이션: 프레임 중앙의 고정 시점을 기준으로 문 중심이 왼쪽이면 왼쪽, 오른쪽이면 오른쪽 진동 모터가 안내하며, 정렬될수록 양쪽 모터가 더 강하게 진동합니다.'
+  const vibrationCaption = state === 0
+    ? '진동 기준: 손가락 끝 — 박스가 있는 쪽 모터가 울리고, 박스 중심에 가까울수록 양쪽이 강하게'
+    : '진동 기준: 화면 중앙(시점) — 박스가 있는 쪽 모터가 울리고, 박스 중심에 가까울수록 양쪽이 강하게'
 
   return (
     <figure ref={ref} className="min-w-0">
       <canvas ref={canvasRef} aria-hidden className="block aspect-video w-full rounded-[6px] bg-ink" />
       <span className="sr-only">{description}</span>
-      <figcaption className="mt-1.5 text-[11px] leading-snug text-muted">
-        ※ 처리 속도 차이를 보여주기 위한 시뮬레이션 화면입니다 (실제 카메라 영상 아님)
+      <figcaption>
+        <p className="mt-2 text-note text-ink-soft">{vibrationCaption}</p>
+        <p className="mt-1 text-[11px] leading-snug text-muted">
+          ※ 시뮬레이션 화면 (실제 카메라 영상 아님)
+        </p>
       </figcaption>
     </figure>
   )
