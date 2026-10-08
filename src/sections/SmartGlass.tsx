@@ -159,7 +159,7 @@ function Clip({ src, poster, alt }: { src: string; poster: string; alt: string }
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="auto"
       aria-label={alt}
       className="block aspect-video w-full bg-ink object-cover"
     />
