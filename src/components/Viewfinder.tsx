@@ -196,11 +196,11 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       const candidates = [
         { x: reference.x + 15, y: reference.y - tagH / 2 },
         { x: reference.x - tagW - 15, y: reference.y - tagH / 2 },
-        { x: targetBox.x + targetBox.w + 48, y: reference.y - tagH / 2 },
-        { x: targetBox.x - tagW - 48, y: reference.y - tagH / 2 },
+        { x: targetBox.x + targetBox.w + 10, y: reference.y - tagH / 2 },
+        { x: targetBox.x - tagW - 10, y: reference.y - tagH / 2 },
         { x: reference.x + 10, y: reference.y - tagH - 15 },
         { x: reference.x + 10, y: reference.y + 15 },
-        { x: targetBox.x + targetBox.w + 48, y: targetBox.y + targetBox.h + 10 },
+        { x: targetBox.x + targetBox.w + 10, y: targetBox.y + targetBox.h + 10 },
       ]
       const candidate = candidates.find(({ x, y }) => !overlaps({ x, y, w: tagW, h: tagH }, blocked)) ?? candidates.at(-1)!
       tag(candidate.x, candidate.y, value, color)
@@ -394,12 +394,12 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       if (slow) {
         reference = drawHand(time, detectedDoor, stopped)
         drawGuide(reference, centerOf(detectedDoor), '#e1be8a')
-        drawReferenceTag(reference, bus, 'fingertip', '#e1be8a')
+        drawReferenceTag(reference, detectedDoor, 'fingertip', '#e1be8a')
       } else {
         reference = { x: width / 2, y: height / 2 }
         drawGuide(reference, centerOf(detectedDoor), '#8ec9e8')
         drawReticle(reference)
-        drawReferenceTag(reference, bus, 'viewpoint', '#8ec9e8')
+        drawReferenceTag(reference, detectedDoor, 'viewpoint', '#8ec9e8')
       }
 
       const mono = fontSize()
