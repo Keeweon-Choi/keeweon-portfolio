@@ -1,10 +1,13 @@
-import { useInView } from 'motion/react'
-import { Fragment, useRef } from 'react'
+import { motion, useInView, useMotionValueEvent, useReducedMotion, useTransform, type MotionValue } from 'motion/react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { Chapter } from '../components/Chapter'
+import { useLive, useLoop } from '../components/fx/loop'
 import { CountUp, Reveal } from '../components/motion'
 import { Em, Label, TechDetail, Title } from '../components/ui'
 import { edgeAI as d } from '../data/projects'
 import { pad } from '../lib/util'
+
+const LAP = 3.5 // 레이스에서 Baseline이 한 바퀴 도는 시간(초). 같은 시간에 Optimized는 ≈5바퀴
 
 export function EdgeAI() {
   return (
@@ -105,6 +108,69 @@ function SpeedBars() {
           </Fragment>
         )
       })}
+      <Race start={inView} max={max} />
     </div>
+  )
+}
+
+/**
+ * 막대가 다 자란 뒤의 레이스: 같은 트랙을 Baseline이 1바퀴 도는 동안 Optimized는 5바퀴 (≈5×를 눈으로).
+ * 보이는 동안만 돈다. 모션 감소면 정적인 그림(두 점 모두 결승선 · 1 lap / 5 laps).
+ * 막대와 같은 열에 맞추려고 부모 grid의 subgrid로 들어간다.
+ */
+function Race({ start, max }: { start: boolean; max: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const reduce = !!useReducedMotion()
+  const [grown, setGrown] = useState(false)
+  useEffect(() => {
+    if (!start) return
+    const id = setTimeout(() => setGrown(true), 1700) // 막대(1.3s + 지연)가 다 자란 뒤 출발
+    return () => clearTimeout(id)
+  }, [start])
+  const live = useLive(ref, 0.5)
+  const t = useLoop(live && grown, LAP)
+  const [laps, setLaps] = useState(0) // 가장 빠른 레인 기준 바퀴 수
+  useMotionValueEvent(t, 'change', (v) => setLaps(Math.floor(v * max)))
+  return (
+    <div
+      ref={ref}
+      aria-hidden // 막대 수치의 시각적 반복이라 스크린리더에는 숨긴다
+      className="col-span-3 grid grid-cols-subgrid items-center gap-y-3 border-t border-dashed border-line pt-[clamp(0.75rem,2.5vh,1.5rem)]"
+    >
+      {d.result.bars.map((b) => {
+        const best = b.value === max
+        const n = reduce ? b.value : Math.floor((laps * b.value) / max)
+        return (
+          <Fragment key={b.label}>
+            <span className="font-mono text-note text-muted">{b.label}</span>
+            <Lane t={t} speed={b.value} best={best} still={reduce} />
+            <span className={`text-right font-mono text-note tabular-nums ${best ? 'text-blue-deep' : 'text-muted'}`}>
+              {n} {n === 1 ? 'lap' : 'laps'}
+            </span>
+          </Fragment>
+        )
+      })}
+    </div>
+  )
+}
+
+/** 점선 트랙 + 결승선 + 달리는 점(빠른 쪽은 꼬리). 트랙 양끝 밖은 잘라서 꼬리가 라벨을 덮지 않는다 */
+function Lane({ t, speed, best, still }: { t: MotionValue<number>; speed: number; best: boolean; still: boolean }) {
+  const x = useTransform(t, (v) => (still ? '100%' : `${((v * speed) % 1) * 100}%`))
+  return (
+    <span className="relative h-3">
+      <span className="absolute inset-x-0 top-1/2 border-t border-dashed border-line-strong" />
+      <span className="absolute inset-y-0 right-0 w-0.5 rounded-full bg-line-strong" />
+      <span className="absolute -inset-x-1.5 -inset-y-1 overflow-hidden">
+        <motion.span className="absolute inset-y-0 right-1.5 left-1.5" style={{ x }}>
+          {best && (
+            <span className="absolute top-1/2 left-0 h-0.5 w-10 -translate-x-full -translate-y-1/2 rounded-full bg-linear-to-r from-transparent to-blue/60" />
+          )}
+          <span
+            className={`absolute top-1/2 left-0 size-2.5 -translate-1/2 rounded-full ${best ? 'bg-blue' : 'bg-faint'}`}
+          />
+        </motion.span>
+      </span>
+    </span>
   )
 }

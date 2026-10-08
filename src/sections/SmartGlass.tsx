@@ -1,13 +1,30 @@
-import { Armchair, ArrowRight, BellRing, Bus, CreditCard, DoorOpen } from 'lucide-react'
-import { AnimatePresence, animate, motion, useInView, useReducedMotion } from 'motion/react'
+import { Armchair, ArrowRight, BellRing, Bus, ChevronRight, CreditCard, DoorOpen } from 'lucide-react'
+import {
+  AnimatePresence,
+  animate,
+  easeInOut,
+  motion,
+  useInView,
+  useMotionValueEvent,
+  useReducedMotion,
+  type MotionValue,
+} from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Chapter } from '../components/Chapter'
+import { Arrive, Beam } from '../components/fx/Beam'
+import { Tilt } from '../components/fx/Tilt'
+import { useCycle, useFlow, useLive, useLoop } from '../components/fx/loop'
 import { Reveal } from '../components/motion'
 import { Em, Label, TechDetail, Title } from '../components/ui'
 import { redesign as r, smartGlass as d, type PipelineNode, type Tone } from '../data/projects'
 import { asset, ease } from '../lib/util'
 
 const icons = { bus: Bus, door: DoorOpen, card: CreditCard, seat: Armchair, bell: BellRing }
+
+// 사용 흐름 선 위를 달리는 점: 아이콘마다 stop초 머물고 move초에 다음 아이콘으로, 끝에서 rest초 쉰다
+const ride = { lead: 0.15, stop: 0.5, move: 0.55, rest: 0.6 }
+const rideAt = (i: number) => ride.lead + i * (ride.stop + ride.move)
+const rideSeconds = rideAt(d.usage.length - 1) + ride.stop + ride.rest
 
 export function SmartGlass() {
   return (
@@ -91,21 +108,7 @@ function Overview() {
 
           <Reveal className="mt-[clamp(2.5rem,7vh,4rem)]">
             <Label>{d.systemLabel}</Label>
-            <ol className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] sm:items-stretch">
-              {d.system.map((s, i) => (
-                <li key={s.label} className="contents">
-                  {i > 0 && (
-                    <span aria-hidden className="hidden place-items-center text-faint sm:grid">
-                      <ArrowRight className="size-4" />
-                    </span>
-                  )}
-                  <span className="rounded-[4px] border border-line bg-surface px-3.5 py-3">
-                    <span className="block text-note font-medium text-muted">{s.stage}</span>
-                    <span className="mt-0.5 block text-body leading-snug font-semibold text-ink">{s.label}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <SystemFlow />
             <div className="mt-3 border-t-2 border-blue pt-3">
               <p className="text-body text-ink">
                 <span className="mr-3 font-mono text-note tracking-[0.1em] text-blue-deep uppercase">My Role</span>
@@ -128,7 +131,33 @@ function Overview() {
   )
 }
 
-/** 화면에 들어오면 아래에서 위로 걷히며 나타나는 사진 */
+/** 입력 → 인식 → 판단 → 피드백: 보이는 동안 빛이 화살표를 따라 단계마다 차례로 지나간다 */
+function SystemFlow() {
+  const ref = useRef<HTMLOListElement>(null)
+  const n = d.system.length
+  const t = useFlow(ref, n)
+  return (
+    <ol ref={ref} className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] sm:items-stretch">
+      {d.system.map((s, i) => (
+        <li key={s.label} className="contents">
+          {i > 0 && (
+            <span aria-hidden className="relative hidden place-items-center text-faint sm:grid">
+              <ArrowRight className="size-4" />
+              <Beam t={t} i={i - 1} n={n} className="inset-y-0 -inset-x-2" />
+            </span>
+          )}
+          <span className="relative rounded-[4px] border border-line bg-surface px-3.5 py-3">
+            <Arrive t={t} i={i} n={n} />
+            <span className="block text-note font-medium text-muted">{s.stage}</span>
+            <span className="mt-0.5 block text-body leading-snug font-semibold text-ink">{s.label}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+/** 화면에 들어오면 아래에서 위로 걷히며 나타나는 사진. 마우스를 올리면 살짝 기운다 */
 function Photo({
   src,
   alt,
@@ -146,23 +175,36 @@ function Photo({
   // 완전히 clip된 요소는 IntersectionObserver가 '안 보임'으로 판정하므로, 관찰은 figure가 하고 사진은 variant로 따라간다
   return (
     <motion.figure initial={reduce ? false : 'hidden'} whileInView="shown" viewport={{ once: true, amount: 0.3 }}>
-      <motion.div
-        className="overflow-hidden rounded-[4px] bg-line"
-        variants={{ hidden: { clipPath: 'inset(100% 0% 0% 0%)' }, shown: { clipPath: 'inset(0% 0% 0% 0%)' } }}
-        transition={{ duration: 1.1, ease, delay }}
-      >
-        <img src={asset(src)} alt={alt} className={`block aspect-[4/5] w-full object-cover ${fit}`} />
-      </motion.div>
+      <Tilt>
+        <motion.div
+          className="overflow-hidden rounded-[4px] bg-line"
+          variants={{ hidden: { clipPath: 'inset(100% 0% 0% 0%)' }, shown: { clipPath: 'inset(0% 0% 0% 0%)' } }}
+          transition={{ duration: 1.1, ease, delay }}
+        >
+          <img src={asset(src)} alt={alt} className={`block aspect-[4/5] w-full object-cover ${fit}`} />
+        </motion.div>
+      </Tilt>
       <figcaption className="mt-2 text-note text-muted">{caption}</figcaption>
     </motion.figure>
   )
 }
 
-/** 버스 확인 → … → 하차벨: 화면에 들어오면 순서대로 불이 켜진다 */
+/**
+ * 버스 확인 → … → 하차벨: 화면에 들어오면 순서대로 불이 켜지고,
+ * 그다음부터는 보이는 동안 점이 선을 따라 달리며 아이콘마다 잠깐 멈춘다(멈춘 아이콘이 밝아진다)
+ */
 function UsageFlow() {
   const ref = useRef<HTMLOListElement>(null)
   const on = useInView(ref, { once: true, amount: 0.7 })
   const step = 0.22 // 초
+  const [ready, setReady] = useState(false) // 순서대로 다 켜진 뒤에 점이 출발
+  useEffect(() => {
+    if (!on) return
+    const id = setTimeout(() => setReady(true), (step * (d.usage.length - 1) + 0.6) * 1000)
+    return () => clearTimeout(id)
+  }, [on])
+  const live = useLive(ref, 0.5)
+  const t = useLoop(live && ready, rideSeconds)
   return (
     <ol ref={ref} className="relative mt-4 grid grid-cols-5 gap-2">
       <span
@@ -174,17 +216,19 @@ function UsageFlow() {
         className="absolute top-[calc(1.375rem-0.5px)] right-[10%] left-[10%] h-0.5 origin-left bg-blue transition-transform ease-linear"
         style={{ transform: `scaleX(${on ? 1 : 0})`, transitionDuration: `${step * (d.usage.length - 1)}s` }}
       />
+      <RideDot t={t} />
       {d.usage.map((u, i) => {
         const Icon = icons[u.icon]
         return (
           <li key={u.label} className="relative flex flex-col items-center text-center">
             <span
-              className={`grid size-11 place-items-center rounded-full border bg-surface transition-colors duration-300 ${
+              className={`relative grid size-11 place-items-center rounded-full border bg-surface transition-colors duration-300 ${
                 on ? 'border-blue text-blue' : 'border-line-strong text-faint'
               }`}
               style={{ transitionDelay: `${i * step}s` }}
             >
-              <Icon aria-hidden className="size-5" strokeWidth={1.6} />
+              <StopGlow t={t} i={i} />
+              <Icon aria-hidden className="relative size-5" strokeWidth={1.6} />
             </span>
             <span className="mt-2.5 text-body font-semibold text-ink">{u.label}</span>
             <span className="font-mono text-note text-muted">{u.en}</span>
@@ -192,6 +236,38 @@ function UsageFlow() {
         )
       })}
     </ol>
+  )
+}
+
+/** 선 위를 달리는 점. 아이콘 뒤로 지나가므로 정류장에 멈춘 동안은 아이콘이 대신 밝아진다 */
+function RideDot({ t }: { t: MotionValue<number> }) {
+  const n = d.usage.length
+  // [도착0, 출발0, 도착1, …, 도착(n-1)] → [0%, 0%, 25%, …, 100%]
+  const times = d.usage.flatMap((_, i) => [rideAt(i), rideAt(i) + ride.stop]).slice(0, -1)
+  const spots = d.usage.flatMap((_, i) => [i, i]).slice(0, -1)
+  const x = useCycle(
+    t,
+    times.map((s) => s / rideSeconds),
+    spots.map((i) => `${(i / (n - 1)) * 100}%`),
+    { ease: easeInOut },
+  )
+  return (
+    <motion.span aria-hidden style={{ x }} className="absolute top-[1.375rem] right-[10%] left-[10%] h-0">
+      <span className="absolute top-0 left-0 size-3 -translate-1/2 rounded-full border-2 border-surface bg-blue shadow-[0_0_0_3px_rgba(142,201,232,0.55)]" />
+    </motion.span>
+  )
+}
+
+/** 점이 i번째 아이콘에 머무는 동안 아이콘 안쪽이 하늘색으로 은은하게 밝아진다 */
+function StopGlow({ t, i }: { t: MotionValue<number>; i: number }) {
+  const a = rideAt(i)
+  const opacity = useCycle(
+    t,
+    [a - 0.12, a, a + ride.stop, a + ride.stop + 0.35].map((s) => s / rideSeconds),
+    [0, 1, 1, 0],
+  )
+  return (
+    <motion.span aria-hidden style={{ opacity }} className="absolute inset-0 rounded-full bg-sky-pale ring-4 ring-sky/35" />
   )
 }
 
@@ -301,8 +377,13 @@ function StepText({ step }: { step: (typeof r.story)[number] }) {
 /** 파이프라인 + FPS. onPick이 있으면(데스크톱 고정 패널) 토글로 해당 단계까지 스크롤 */
 function Panel({ state, onPick }: { state: number; onPick?: (state: number) => void }) {
   const s = r.states[state]
+  const ref = useRef<HTMLDivElement>(null)
+  const live = useLive(ref) // 점선 흐름 · 프레임 메트로놈은 보일 때만
   return (
-    <div className="rounded-[8px] border border-line bg-surface p-[clamp(1.25rem,3.5vh,2.25rem)] shadow-[0_1px_2px_rgba(23,35,49,0.04),0_16px_40px_-20px_rgba(23,35,49,0.18)]">
+    <div
+      ref={ref}
+      className="rounded-[8px] border border-line bg-surface p-[clamp(1.25rem,3.5vh,2.25rem)] shadow-[0_1px_2px_rgba(23,35,49,0.04),0_16px_40px_-20px_rgba(23,35,49,0.18)]"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         {onPick ? (
           <div
@@ -338,14 +419,14 @@ function Panel({ state, onPick }: { state: number; onPick?: (state: number) => v
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
-          <Pipeline state={s} />
+          <Pipeline state={s} live={live} />
         </motion.div>
       </AnimatePresence>
 
       <div className="mt-[clamp(1.25rem,4vh,2.25rem)] grid items-end gap-x-8 gap-y-4 border-t border-line pt-5 sm:grid-cols-[auto_1fr]">
         <FpsNumber state={state} />
         <div>
-          <FrameStrip state={state} />
+          <FrameStrip key={state} state={state} live={live} />
           <p className="mt-2 text-note text-muted">{r.stripLabel}</p>
         </div>
       </div>
@@ -361,9 +442,11 @@ const box: Record<Tone, string> = {
   warn: 'border-warn/50 bg-warn-pale',
 }
 
-function Pipeline({ state }: { state: State }) {
+function Pipeline({ state, live }: { state: State; live: boolean }) {
   const { group, selector } = state
   const warn = group.tone === 'warn'
+  // 병목(초기 설계)이면 점선이 느리게, 재설계면 빠르게 흐른다
+  const arrow = <Arrow live={live} seconds={warn ? 1.2 : 0.4} />
   return (
     <div
       className={`mt-6 grid items-center gap-2 ${
@@ -373,11 +456,11 @@ function Pipeline({ state }: { state: State }) {
       }`}
     >
       <Stack nodes={state.input} />
-      <Arrow />
+      {arrow}
       {selector && (
         <>
           <Node node={selector} />
-          <Arrow />
+          {arrow}
         </>
       )}
       <div className={`rounded-[4px] border border-dashed p-2 ${warn ? 'border-warn/60' : 'border-blue/60'}`}>
@@ -388,7 +471,7 @@ function Pipeline({ state }: { state: State }) {
           {group.note}
         </p>
       </div>
-      <Arrow />
+      {arrow}
       <Stack nodes={state.output} />
     </div>
   )
@@ -419,8 +502,19 @@ function Node({ node }: { node: PipelineNode }) {
   )
 }
 
-function Arrow() {
-  return <ArrowRight aria-hidden className="mx-auto size-4 rotate-90 text-faint sm:rotate-0" />
+/** 흐름 방향으로 점선이 흘러가는 화살표 (모바일은 아래 방향). seconds = 점선 한 칸(6px)이 흐르는 시간 */
+function Arrow({ live, seconds }: { live: boolean; seconds: number }) {
+  return (
+    <span aria-hidden className="relative mx-auto block size-4 rotate-90 text-faint sm:rotate-0">
+      <motion.span
+        className="absolute top-1/2 -left-1 right-1.5 h-[1.5px] -translate-y-1/2"
+        style={{ backgroundImage: 'linear-gradient(90deg, currentColor 50%, transparent 0)', backgroundSize: '6px 100%' }}
+        animate={{ backgroundPositionX: live ? ['0px', '6px'] : '0px' }}
+        transition={live ? { duration: seconds, ease: 'linear', repeat: Infinity } : { duration: 0 }}
+      />
+      <ChevronRight className="absolute top-0 -right-1 size-4" />
+    </span>
+  )
 }
 
 /** 상태가 바뀌면 3 ↔ 15로 세고, 끝나면 '2–3' / '15+' 표기로 */
@@ -461,7 +555,36 @@ function FpsNumber({ state }: { state: number }) {
   )
 }
 
-function FrameStrip({ state }: { state: number }) {
+/**
+ * 1초 동안 처리하는 프레임 메트로놈: 실제 속도(2.5 / 15 FPS)로 칸이 하나씩 켜지고 1초가 지나면 비운다.
+ * 가장 최근 프레임이 가장 진하다. 모션 감소 · 화면 밖이면 정적인 그림(StaticStrip)
+ */
+function FrameStrip({ state, live }: { state: number; live: boolean }) {
+  const slots = r.states[1].lit // 15칸 = 1초 (1칸 = 1/15초)
+  const every = slots / r.states[state].lit // 몇 칸마다 한 프레임: 6 (2.5 FPS) · 1 (15 FPS)
+  const t = useLoop(live, 1)
+  const [tick, setTick] = useState(0)
+  useMotionValueEvent(t, 'change', (v) => setTick(Math.floor(v * slots)))
+  if (!live) return <StaticStrip state={state} />
+  const first = Math.ceil((tick - (tick % slots)) / every) * every // 이번 1초의 첫 프레임
+  const count = tick < first ? 0 : Math.floor((tick - first) / every) + 1
+  return (
+    <div aria-hidden className="flex gap-1">
+      {Array.from({ length: slots }, (_, i) => (
+        <span key={i} className="relative h-7 flex-1 rounded-[2px] bg-line">
+          <span
+            className={`absolute inset-0 rounded-[2px] ${state ? 'bg-blue' : 'bg-warn'} ${
+              i < count ? '' : 'transition-opacity duration-200'
+            }`}
+            style={{ opacity: i < count ? (i === count - 1 ? 1 : 0.7) : 0 }}
+          />
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function StaticStrip({ state }: { state: number }) {
   const lit = r.states[state].lit
   const slots = r.states[1].lit
   return (
