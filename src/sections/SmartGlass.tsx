@@ -11,6 +11,7 @@ import {
 } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Chapter } from '../components/Chapter'
+import { Clip } from '../components/Clip'
 import { Arrive, Beam } from '../components/fx/Beam'
 import { Detect } from '../components/fx/Detect'
 import { Tilt } from '../components/fx/Tilt'
@@ -147,32 +148,6 @@ function Overview() {
       {/* 실제로 어떻게 안내하는지: 좌우 진동 모터를 단 3D 모형 + 카메라 화면 */}
       <GlassGuide />
     </>
-  )
-}
-
-/** 기존 보조 기술의 공식 데모 몇 초. 보이는 동안만 반복 재생 (모션 감소면 포스터 한 장) */
-function Clip({ src, poster, alt }: { src: string; poster: string; alt: string }) {
-  const ref = useRef<HTMLVideoElement>(null)
-  const visible = useInView(ref, { amount: 0.4 })
-  const reduce = useReducedMotion()
-  useEffect(() => {
-    const v = ref.current
-    if (!v) return
-    if (visible && !reduce) v.play().catch(() => {})
-    else v.pause()
-  }, [visible, reduce])
-  return (
-    <video
-      ref={ref}
-      src={asset(src)}
-      poster={asset(poster)}
-      muted
-      loop
-      playsInline
-      preload="auto"
-      aria-label={alt}
-      className="block aspect-video w-full bg-ink object-cover"
-    />
   )
 }
 

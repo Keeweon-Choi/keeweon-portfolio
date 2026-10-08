@@ -36,10 +36,41 @@ export const future = {
   ahead: '앞으로',
   aheadNote: '인식이 판단과 행동으로 이어지는 전체 시스템',
   interestsLabel: '앞으로 공부하고 싶은 방향',
+  // clip: 공개 라이선스 시연 영상 몇 초 (출처 표기)
   interests: [
-    { title: 'Robust Perception', text: '실제 환경 변화에서도 안정적으로 동작하는 인식' },
-    { title: 'Sensor Fusion / 3D Perception', text: '카메라뿐 아니라 여러 센서를 활용한 환경 이해' },
-    { title: 'On-device Robotics', text: '제한된 연산 환경에서도 실시간으로 동작하는 perception' },
+    {
+      title: 'Robust Perception',
+      text: '실제 환경 변화에서도 안정적으로 동작하는 인식',
+      clip: {
+        src: 'media/interest-robust.mp4',
+        poster: 'media/interest-robust.jpg',
+        alt: '짙은 안개 속 교차로를 스테레오 · 게이티드 · 열화상 카메라로 함께 보는 장면',
+        credit: 'SeeingThroughFog (Princeton · MIT)',
+        fit: 'object-cover object-top',
+      },
+    },
+    {
+      title: 'Sensor Fusion / 3D Perception',
+      text: '카메라뿐 아니라 여러 센서를 활용한 환경 이해',
+      clip: {
+        src: 'media/interest-fusion.mp4',
+        poster: 'media/interest-fusion.jpg',
+        alt: '여섯 대의 카메라와 LiDAR를 합쳐 위에서 본 지도(BEV)에 주변 물체와 도로를 그리는 장면',
+        credit: 'BEVFusion (MIT HAN Lab · Apache-2.0)',
+        fit: 'object-contain',
+      },
+    },
+    {
+      title: 'On-device Robotics',
+      text: '제한된 연산 환경에서도 실시간으로 동작하는 perception',
+      clip: {
+        src: 'media/interest-ondevice.mp4',
+        poster: 'media/interest-ondevice.jpg',
+        alt: '스마트폰을 두뇌로 쓰는 작은 로봇 자동차가 트랙을 스스로 따라 달리는 장면',
+        credit: 'OpenBot (Intel · MIT)',
+        fit: 'object-cover',
+      },
+    },
   ],
   statement:
     '지금까지는 카메라 기반 Perception과 Edge AI를 중심으로 경험했습니다. 앞으로는 이를 로봇 시스템으로 확장해, 여러 센서로 주변 환경을 이해하고 제한된 연산 환경에서도 안정적으로 실시간 동작하는 Perception system을 더 깊게 공부하고 싶습니다.',

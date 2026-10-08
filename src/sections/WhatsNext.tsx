@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { useRef } from 'react'
 import { Chapter } from '../components/Chapter'
 import { Arrive, Beam } from '../components/fx/Beam'
+import { Clip } from '../components/Clip'
 import { SpotlightCard } from '../components/fx/SpotlightCard'
 import { useFlow } from '../components/fx/loop'
 import { Reveal } from '../components/motion'
@@ -85,10 +86,14 @@ export function WhatsNext() {
       <ol className="mt-4 grid gap-x-6 gap-y-4 md:grid-cols-3">
         {d.interests.map((it, i) => (
           <Reveal as="li" key={it.title} delay={i * 0.12} className="h-full">
-            <SpotlightCard className="border border-t-2 border-line border-t-line-strong bg-surface px-5 pt-4 pb-5 group-hover:border-t-blue">
-              <span className="font-mono text-note text-blue-deep">{pad(i + 1)}</span>
-              <p className="mt-2 text-heading leading-snug font-semibold tracking-[-0.02em] text-ink">{it.title}</p>
-              <p className="mt-1.5 text-body text-muted">{it.text}</p>
+            <SpotlightCard className="overflow-hidden border border-t-2 border-line border-t-line-strong bg-surface group-hover:border-t-blue">
+              <Clip src={it.clip.src} poster={it.clip.poster} alt={it.clip.alt} fit={it.clip.fit} />
+              <div className="px-5 pt-4 pb-5">
+                <span className="font-mono text-note text-blue-deep">{pad(i + 1)}</span>
+                <p className="mt-2 text-heading leading-snug font-semibold tracking-[-0.02em] text-ink">{it.title}</p>
+                <p className="mt-1.5 text-body text-muted">{it.text}</p>
+                <p className="mt-3 font-mono text-[11px] text-faint">영상 · {it.clip.credit}</p>
+              </div>
             </SpotlightCard>
           </Reveal>
         ))}
