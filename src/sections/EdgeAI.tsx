@@ -1,9 +1,10 @@
 import { motion, useInView, useMotionValueEvent, useReducedMotion, useTransform, type MotionValue } from 'motion/react'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { Chapter } from '../components/Chapter'
+import { Detect } from '../components/fx/Detect'
 import { useLive, useLoop } from '../components/fx/loop'
-import { CountUp, Reveal } from '../components/motion'
-import { Em, Label, TechDetail, Title } from '../components/ui'
+import { CountUp, Reveal, Words } from '../components/motion'
+import { Label, TechDetail, Title } from '../components/ui'
 import { edgeAI as d } from '../data/projects'
 import { pad } from '../lib/util'
 
@@ -49,7 +50,7 @@ export function EdgeAI() {
         </div>
 
         <Reveal delay={0.15} className="lg:col-span-7">
-          <div className="rounded-[6px] border border-line bg-canvas p-[clamp(1.5rem,4vh,2.75rem)]">
+          <div className="beam-border rounded-[6px] border border-line bg-canvas p-[clamp(1.5rem,4vh,2.75rem)]">
             <Label>{d.result.caption}</Label>
             <SpeedBars />
             <p className="mt-6 flex items-start gap-3 border-t border-line pt-5 text-body text-ink-soft">
@@ -65,7 +66,7 @@ export function EdgeAI() {
           <div className="lg:col-span-8">
             <Label>What I learned</Label>
             <p className="mt-2 text-heading leading-snug font-semibold tracking-[-0.02em] text-ink">
-              <Em text={d.lesson} />
+              <Words text={d.lesson} />
             </p>
           </div>
           <p className="self-end text-body text-muted lg:col-span-4">
@@ -103,7 +104,13 @@ function SpeedBars() {
                 best ? 'text-blue' : 'text-faint'
               }`}
             >
-              {best ? <CountUp from={1} to={b.value} prefix="≈" suffix="×" /> : b.text}
+              {best ? (
+                <Detect label="speed-up" delay={1.4}>
+                  <CountUp from={1} to={b.value} prefix="≈" suffix="×" />
+                </Detect>
+              ) : (
+                b.text
+              )}
             </span>
           </Fragment>
         )

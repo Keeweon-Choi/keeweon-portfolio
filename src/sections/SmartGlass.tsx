@@ -1,4 +1,4 @@
-import { Armchair, ArrowRight, BellRing, Bus, ChevronRight, CreditCard, DoorOpen } from 'lucide-react'
+import { Armchair, ArrowRight, Award, BellRing, Bus, ChevronRight, CreditCard, DoorOpen } from 'lucide-react'
 import {
   AnimatePresence,
   animate,
@@ -12,9 +12,10 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { Chapter } from '../components/Chapter'
 import { Arrive, Beam } from '../components/fx/Beam'
+import { Detect } from '../components/fx/Detect'
 import { Tilt } from '../components/fx/Tilt'
 import { useCycle, useFlow, useLive, useLoop } from '../components/fx/loop'
-import { Reveal } from '../components/motion'
+import { Reveal, Words } from '../components/motion'
 import { Em, Label, TechDetail, Title } from '../components/ui'
 import { redesign as r, smartGlass as d, type PipelineNode, type Tone } from '../data/projects'
 import { asset, ease } from '../lib/util'
@@ -46,6 +47,10 @@ function Overview() {
         </Reveal>
         <Reveal delay={0.1} className="lg:col-span-5">
           <p className="text-lead text-ink-soft">{d.goal}</p>
+          <p className="mt-3 flex items-start gap-2 text-note text-muted">
+            <Award aria-hidden className="mt-[0.2em] size-4 shrink-0 text-faint" strokeWidth={1.6} />
+            {d.awards.join(' · ')}
+          </p>
         </Reveal>
       </div>
 
@@ -87,12 +92,16 @@ function Overview() {
         <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
           {d.references.map((r, i) => (
             <Reveal key={r.name} delay={0.1 + i * 0.12} className="h-full">
-              <div className="h-full rounded-[6px] border border-line bg-surface p-5">
-                <p className="text-body font-semibold text-ink">{r.name}</p>
-                <p className="mt-2 text-body text-muted">
-                  <span className="mr-2 font-medium text-warn">한계</span>
-                  {r.limit}
-                </p>
+              <div className="h-full overflow-hidden rounded-[6px] border border-line bg-surface">
+                <Clip {...r.clip} />
+                <div className="p-5">
+                  <p className="text-body font-semibold text-ink">{r.name}</p>
+                  <p className="mt-2 text-body text-muted">
+                    <span className="mr-2 font-medium text-warn">한계</span>
+                    {r.limit}
+                  </p>
+                  <p className="mt-3 font-mono text-[11px] text-faint">영상 · {r.clip.credit}</p>
+                </div>
               </div>
             </Reveal>
           ))}
@@ -131,6 +140,32 @@ function Overview() {
   )
 }
 
+/** 기존 보조 기술의 공식 데모 몇 초. 보이는 동안만 반복 재생 (모션 감소면 포스터 한 장) */
+function Clip({ src, poster, alt }: { src: string; poster: string; alt: string }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  const visible = useInView(ref, { amount: 0.4 })
+  const reduce = useReducedMotion()
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    if (visible && !reduce) v.play().catch(() => {})
+    else v.pause()
+  }, [visible, reduce])
+  return (
+    <video
+      ref={ref}
+      src={asset(src)}
+      poster={asset(poster)}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-label={alt}
+      className="block aspect-video w-full bg-ink object-cover"
+    />
+  )
+}
+
 /** 입력 → 인식 → 판단 → 피드백: 보이는 동안 빛이 화살표를 따라 단계마다 차례로 지나간다 */
 function SystemFlow() {
   const ref = useRef<HTMLOListElement>(null)
@@ -157,19 +192,26 @@ function SystemFlow() {
   )
 }
 
-/** 화면에 들어오면 아래에서 위로 걷히며 나타나는 사진. 마우스를 올리면 살짝 기운다 */
+type Box = { label: string; x: number; y: number; w: number; h: number }
+
+/**
+ * 화면에 들어오면 아래에서 위로 걷히며 나타나는 사진. 마우스를 올리면 살짝 기운다.
+ * boxes가 있으면 사진이 다 걷힌 뒤 탐지 박스처럼 부품에 주석이 붙는다 (샘플 D)
+ */
 function Photo({
   src,
   alt,
   caption,
   fit,
   delay,
+  boxes,
 }: {
   src: string
   alt: string
   caption: string
   fit: string
   delay: number
+  boxes?: Box[]
 }) {
   const reduce = useReducedMotion()
   // 완전히 clip된 요소는 IntersectionObserver가 '안 보임'으로 판정하므로, 관찰은 figure가 하고 사진은 variant로 따라간다
@@ -177,11 +219,25 @@ function Photo({
     <motion.figure initial={reduce ? false : 'hidden'} whileInView="shown" viewport={{ once: true, amount: 0.3 }}>
       <Tilt>
         <motion.div
-          className="overflow-hidden rounded-[4px] bg-line"
+          className="relative overflow-hidden rounded-[4px] bg-line"
           variants={{ hidden: { clipPath: 'inset(100% 0% 0% 0%)' }, shown: { clipPath: 'inset(0% 0% 0% 0%)' } }}
           transition={{ duration: 1.1, ease, delay }}
         >
           <img src={asset(src)} alt={alt} className={`block aspect-[4/5] w-full object-cover ${fit}`} />
+          {boxes?.map((b, i) => (
+            <motion.span
+              key={b.label}
+              aria-hidden
+              className="pointer-events-none absolute border-[1.5px] border-sky"
+              style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }}
+              variants={{ hidden: { opacity: 0, scale: 1.15 }, shown: { opacity: 1, scale: 1 } }}
+              transition={{ duration: 0.45, ease, delay: delay + 1.1 + i * 0.3 }}
+            >
+              <span className="absolute -top-px -left-px -translate-y-full bg-sky px-1.5 py-0.5 font-mono text-[10px] leading-none whitespace-nowrap text-ink">
+                {b.label}
+              </span>
+            </motion.span>
+          ))}
         </motion.div>
       </Tilt>
       <figcaption className="mt-2 text-note text-muted">{caption}</figcaption>
@@ -342,8 +398,16 @@ function StepText({ step }: { step: (typeof r.story)[number] }) {
   return (
     <div>
       <Label tone={step.tone}>{step.label}</Label>
-      <h4 className="mt-2 text-heading leading-snug font-semibold tracking-[-0.02em] text-ink">
-        <Em text={step.title} />
+      <h4
+        className={`${step.detect ? 'mt-4' : 'mt-2'} text-heading leading-snug font-semibold tracking-[-0.02em] text-ink`}
+      >
+        {step.detect ? (
+          <Detect>
+            <Em text={step.title} />
+          </Detect>
+        ) : (
+          <Em text={step.title} />
+        )}
       </h4>
       <p className="mt-3 text-lead text-ink-soft">{step.text}</p>
       {step.list && (
@@ -366,7 +430,7 @@ function StepText({ step }: { step: (typeof r.story)[number] }) {
         <blockquote className="mt-6 border-l-2 border-sky pl-5">
           <p className="text-note font-medium text-muted">What I learned</p>
           <p className="mt-1.5 text-lead font-semibold tracking-[-0.01em] text-ink">
-            <Em text={step.quote} />
+            <Words text={step.quote} />
           </p>
         </blockquote>
       )}

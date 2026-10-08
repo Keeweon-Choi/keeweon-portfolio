@@ -1,6 +1,7 @@
-import { animate, motion, useInView, useReducedMotion } from 'motion/react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { animate, motion, useInView, useReducedMotion, type Variants } from 'motion/react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ease } from '../lib/util'
+import { Em } from './ui'
 
 /**
  * 화면에 들어올 때 한 번 살짝 떠오르는 블록. 글자 단위가 아니라 블록 단위로만 쓴다.
@@ -67,5 +68,47 @@ export function CountUp({
       {(reduce ? to : value).toFixed(decimals)}
       {suffix}
     </span>
+  )
+}
+
+const word: Variants = {
+  hidden: { opacity: 0.12, filter: 'blur(6px)' },
+  shown: (i: number) => ({
+    opacity: 1,
+    filter: 'blur(0px)',
+    transition: { duration: 0.5, delay: 0.15 + i * 0.045, ease: 'easeOut' },
+  }),
+}
+
+/**
+ * 핵심 문장 전용: 화면에 들어오면 단어가 앞에서부터 차례로 또렷해진다 (샘플 C의 text generate).
+ * *강조*는 Em과 같은 파란색. 모션 감소면 그냥 글자로.
+ */
+export function Words({ text }: { text: string }) {
+  const reduce = useReducedMotion()
+  if (reduce) return <Em text={text} />
+  let n = 0
+  const words = (part: string) =>
+    part.split(/(\s+)/).map((w, i) =>
+      /^\s*$/.test(w) ? (
+        w
+      ) : (
+        <motion.span key={i} className="inline-block" variants={word} custom={n++}>
+          {w}
+        </motion.span>
+      ),
+    )
+  return (
+    <motion.span initial="hidden" whileInView="shown" viewport={{ once: true, amount: 0.6 }}>
+      {text.split('*').map((part, i) =>
+        i % 2 ? (
+          <em key={i} className={`text-blue not-italic ${part.length <= 16 ? 'whitespace-nowrap' : ''}`}>
+            {words(part)}
+          </em>
+        ) : (
+          <Fragment key={i}>{words(part)}</Fragment>
+        ),
+      )}
+    </motion.span>
   )
 }

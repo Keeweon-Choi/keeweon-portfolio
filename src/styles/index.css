@@ -105,6 +105,47 @@
   animation-play-state: paused;
 }
 
+/* 샘플 C의 border beam: 핵심 카드 테두리를 따라 하늘색 빛이 천천히 돈다 (모션 감소면 멈춘 한 줄기) */
+@property --beam-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes beam-spin {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+.beam-border {
+  position: relative;
+}
+
+.beam-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0 70%,
+    var(--color-sky) 84%,
+    var(--color-blue) 93%,
+    transparent 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: beam-spin 7s linear infinite;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -120,5 +161,8 @@
   .marquee-track {
     animation: none;
     transform: none;
+  }
+  .beam-border::after {
+    animation: none;
   }
 }

@@ -2,8 +2,8 @@ import { ArrowDown, ArrowRight } from 'lucide-react'
 import { motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { useRef } from 'react'
 import { Chapter } from '../components/Chapter'
-import { Reveal } from '../components/motion'
-import { Em, Label, Tag, Title } from '../components/ui'
+import { Reveal, Words } from '../components/motion'
+import { Label, Tag, Title } from '../components/ui'
 import { neus as d } from '../data/projects'
 import { asset, pad } from '../lib/util'
 
@@ -25,11 +25,15 @@ export function Neus() {
             <p className="mt-4 inline-block border-l-2 border-ink pl-3 text-body font-medium text-ink-soft">
               “{d.tagline}”
             </p>
+            <p className="mt-5 text-body text-ink">
+              <span className="mr-3 font-mono text-note tracking-[0.1em] text-blue-deep uppercase">My Role</span>
+              <span className="font-semibold">{d.role}</span>
+            </p>
           </Reveal>
 
           {/* Vision 중심 경험 → NLP / LLM으로 확장 */}
           <Reveal delay={0.1} className="mt-[clamp(2.5rem,7vh,4rem)]">
-            <div className="grid items-center gap-5 rounded-[6px] border border-line bg-canvas p-5 sm:grid-cols-[1fr_auto_auto]">
+            <div className="beam-border grid items-center gap-5 rounded-[6px] border border-line bg-canvas p-5 sm:grid-cols-[1fr_auto_auto]">
               <div>
                 <Label>{`${d.shift.beforeLabel} · ${d.shift.beforeNote}`}</Label>
                 <ul className="mt-3 flex flex-wrap gap-1.5">
@@ -70,7 +74,7 @@ export function Neus() {
 
       <Reveal className="mt-[clamp(3rem,9vh,5rem)]">
         <p className="max-w-[40em] border-l-2 border-sky pl-6 text-lead font-semibold tracking-[-0.01em] text-ink">
-          <Em text={d.message} />
+          <Words text={d.message} />
         </p>
       </Reveal>
     </Chapter>

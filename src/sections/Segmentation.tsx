@@ -2,8 +2,8 @@ import { ChevronsLeftRight } from 'lucide-react'
 import { animate, useInView, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Chapter } from '../components/Chapter'
-import { Reveal } from '../components/motion'
-import { Em, Label, Tag, TechDetail, Title } from '../components/ui'
+import { Reveal, Words } from '../components/motion'
+import { Label, Tag, TechDetail, Title } from '../components/ui'
 import { segmentation as d } from '../data/projects'
 import { asset } from '../lib/util'
 
@@ -58,7 +58,7 @@ export function Segmentation() {
             <div className="border-l-2 border-sky pl-5">
               <Label>What I learned</Label>
               <p className="mt-1.5 text-lead font-semibold tracking-[-0.01em] text-ink">
-                <Em text={d.lesson} />
+                <Words text={d.lesson} />
               </p>
             </div>
           </Reveal>

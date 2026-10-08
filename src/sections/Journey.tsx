@@ -2,8 +2,8 @@ import { ArrowRight } from 'lucide-react'
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { useRef } from 'react'
 import { Chapter } from '../components/Chapter'
-import { Reveal } from '../components/motion'
-import { Em, Label } from '../components/ui'
+import { Reveal, Words } from '../components/motion'
+import { Label } from '../components/ui'
 import { journey, journeyIntro, pill, type JourneyItem } from '../data/projects'
 import { usePassed } from '../hooks/usePassed'
 import { asset, pad } from '../lib/util'
@@ -22,7 +22,7 @@ export function Journey() {
       <Reveal className="max-w-[62rem]">
         <p className="text-note font-medium text-muted">{journeyIntro.kicker}</p>
         <h2 className="mt-3 text-title font-bold tracking-[-0.035em] text-ink">
-          <Em text={journeyIntro.question} />
+          <Words text={journeyIntro.question} />
         </h2>
         <p className="mt-5 text-lead text-ink-soft">{journeyIntro.sub}</p>
       </Reveal>

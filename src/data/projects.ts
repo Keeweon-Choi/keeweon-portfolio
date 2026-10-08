@@ -183,24 +183,43 @@ export const smartGlass = {
     ],
   },
   referencesLabel: '참고했던 기존 보조 기술의 한계',
+  // 영상은 각 회사 공식 데모의 몇 초 인용 (출처 표기)
   references: [
     {
       name: '아이폰 감지 모드',
       limit: '문 등 일부 사물만 인식해, 승차부터 하차까지 버스 이용 전 과정을 지원하기 어려움',
+      clip: {
+        src: 'media/at-iphone-door.mp4',
+        poster: 'media/at-iphone-door.jpg',
+        alt: '아이폰 돋보기 앱의 감지 모드로 문을 비추자 닫힌 문까지의 거리와 문에 적힌 글자를 읽어 주는 장면',
+        credit: 'Apple Newsroom · Door Detection 데모 (2022)',
+      },
     },
     {
-      name: '시각장애인 독서 보조 스마트글래스',
+      name: '독서 보조 스마트글래스 · OrCam MyEye',
       limit: '손가락으로 가리킨 영역을 읽어주는 방식 — 보이지 않는 목표물을 먼저 가리켜야 함',
+      clip: {
+        src: 'media/at-orcam-point.mp4',
+        poster: 'media/at-orcam-point.jpg',
+        alt: '안경에 단 OrCam MyEye 앞에서 책의 읽을 부분을 손가락으로 가리키는 장면',
+        credit: 'OrCam · MyEye 2 Tutorial – Reading Text',
+      },
     },
   ],
   gap: '그래서 탑승 순간에서 끝나지 않고, *승차 – 결제 – 착석 – 하차*를 하나의 안내 흐름으로 설계했습니다.',
   tech: ['Jetson Orin Nano', 'YOLO11', 'EasyOCR', 'MediaPipe Hands', 'HC-SR04P', 'TTS'],
+  awards: ['한국ITS학회 2025 추계학술대회 학부논문경진대회 우수상', '탄소중립 INNOVATION ACADEMY 대상'],
   photos: {
     worn: { src: 'images/smartglass-worn.jpg', alt: '스마트글래스 시제품을 착용한 모습', caption: '시제품 착용' },
     hardware: {
       src: 'images/smartglass-hardware.jpg',
       alt: '안경 프레임에 카메라와 거리 센서를 부착한 시제품',
       caption: 'Camera + Distance Sensor',
+      // 4:5로 가운데를 잘라 보여줄 때 기준 위치(%)
+      boxes: [
+        { label: 'distance sensor', x: 23, y: 17, w: 68, h: 28 },
+        { label: 'camera', x: 48, y: 50, w: 18, h: 9 },
+      ],
     },
   },
 }
@@ -275,6 +294,7 @@ export const redesign = {
       label: 'Result',
       tone: 'blue' as Tone,
       title: '2–3 FPS → *15 FPS+*',
+      detect: true, // 결과 수치를 탐지 박스로 잡는다
       text: '실제 사용에서 병목을 발견하고 구조를 다시 설계해, 실시간 사용 수준으로 개선했습니다.',
       quote:
         '모델 하나를 개선하는 것보다, *실제 사용 환경을 이해하고 시스템 구조 전체를 다시 설계하는 것*이 더 중요한 경우도 있었다.',
@@ -290,6 +310,7 @@ export const neus = {
   intro:
     '같은 사건을 다룬 여러 언론사의 보도를 모아 비교하고, 사실과 주장을 나눠 출처가 남는 중립 기사로 재구성하는 뉴스 서비스입니다.',
   tagline: '같은 사건, 다른 보도 · 사실과 주장을 나눠 봅니다',
+  role: 'AI 엔진 1인 전담',
   shift: {
     beforeLabel: '지금까지',
     before: ['Object Detection', 'Edge AI', 'Semantic Segmentation', 'Real-time AI System'],
