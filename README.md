@@ -25,8 +25,11 @@ npm run lint
   - 표지: 이름 리빌, 목차 hover 시 챕터 미리보기 · 키워드 마키 · 챕터 번호가 스크롤에 따라 채워짐
   - Journey 진행선(머리 빛 · 통과 시 펄스) · Edge AI 1× vs ≈5× 레이스
   - Segmentation: 실제 주행 영상 위 카메라 ↔ 세그멘테이션 비교 슬라이더(드래그, 키보드 ←/→, 장면 전환)
-  - Smart Glass: 데이터 흐름 빛줄기, 실제 속도로 깜빡이는 FPS 메트로놈, 스크롤 스토리(2–3 FPS → 15+ FPS)
+  - Smart Glass: 기존 보조 기술 데모 영상, 하드웨어 사진의 탐지 박스 주석, 데이터 흐름 빛줄기,
+    좌우 진동모터가 달린 3D 안경(three.js, 지연 로딩 · WebGL이 없으면 사진)으로 보는 안내 방식,
+    스크롤 스토리(2–3 FPS → 15+ FPS) 패널의 카메라 뷰파인더(손 추적 + 탐지 박스 · 좌우 진동 기준) · FPS 메트로놈
   - NEUS: 실제 서비스 화면 3장(스크롤하면 펼쳐짐) · What's Next 흐름 빛줄기 · spotlight 카드
+  - 강조: 핵심 문장의 단어 순차 등장, 핵심 수치의 탐지 박스, 결과 카드 테두리 빛, 사진 hover 반사
 - `prefers-reduced-motion`이면 움직임 없이 바로 최종 상태로 보인다.
 
 ## 구조
@@ -43,7 +46,8 @@ public/images/ 웹용 이미지 (같은 파일명으로 덮어쓰면 교체)
 
 문구의 사실관계 source of truth는 `keeweon-portfolio-context/`(비공개, git 제외)다. 문구를 바꿀 땐 `src/data/`만 고치면 된다.
 
-외부 자료 출처: 주행 영상 = Cityscapes 장면 · [PIDNet](https://github.com/XuJiacong/PIDNet) 데모(MIT), NEUS 화면 = dev.neus.day 캡처.
+외부 자료 출처: 주행 영상 = Cityscapes 장면 · [PIDNet](https://github.com/XuJiacong/PIDNet) 데모(MIT), NEUS 화면 = dev.neus.day 캡처,
+기존 보조 기술 영상 = Apple Newsroom Door Detection 데모 · OrCam MyEye 2 Tutorial(Reading Text)의 몇 초 인용(출처 표기, `public/media/at-*`).
 
 ## 배포 (GitHub Pages)
 
