@@ -97,7 +97,7 @@ export function GlassGuide() {
   const pinRefs = useRef<Partial<Record<Pin, HTMLElement | null>>>({})
   const sceneRef = useRef<GuideScene | null>(null)
   const [ready, setReady] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null) // 사진으로 대신한 이유
 
   const reduce = !!useReducedMotion()
   const live = useLive(stageRef)
@@ -115,7 +115,7 @@ export function GlassGuide() {
   }, [])
   const start = near || idle
   // 3D가 준비된 뒤(또는 사진으로 대신한 뒤)에 시계를 시작 → 첫 단계를 건너뛰지 않는다
-  const loop = useLoop(live && (ready || failed), LOOP)
+  const loop = useLoop(live && (ready || !!failed), LOOP)
   const time = useTransform(loop, (v) => (reduce ? STILL : (v % 1) * LOOP))
 
   // 단계 · 페이즈가 바뀔 때만 리렌더 (박스 위치 · 진동 세기 · 3D는 매 프레임 직접 그린다)
@@ -151,9 +151,9 @@ export function GlassGuide() {
         sceneRef.current = s
         setReady(true)
       })
-      .catch(() => {
+      .catch((e: unknown) => {
         // WebGL을 못 쓰거나 청크를 못 불러오면 실제 사진으로 대신한다
-        if (!dead) setFailed(true)
+        if (!dead) setFailed(e instanceof Error ? `${e.name}: ${e.message}` : String(e))
       })
     return () => {
       dead = true
@@ -183,11 +183,19 @@ export function GlassGuide() {
           {/* 폰은 정사각: 모형 크기는 그대로(가로 맞춤)이고 라벨 · 말풍선이 들어갈 위아래 여유만 는다 */}
           <div className="relative aspect-square sm:aspect-video">
             {failed ? (
-              <img
-                src={asset(d.photos.hardware.src)}
-                alt={d.photos.hardware.alt}
-                className="absolute inset-0 size-full object-cover"
-              />
+              <>
+                <img
+                  src={asset(d.photos.hardware.src)}
+                  alt={d.photos.hardware.alt}
+                  className="absolute inset-0 size-full object-cover"
+                />
+                <p
+                  title={failed}
+                  className="absolute inset-x-0 bottom-0 bg-ink/70 px-3 py-1.5 text-[11px] leading-snug text-white"
+                >
+                  3D 모형을 표시할 수 없어 시제품 사진으로 대신합니다
+                </p>
+              </>
             ) : (
               <>
                 <canvas
