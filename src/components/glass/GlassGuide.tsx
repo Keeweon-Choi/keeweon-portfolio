@@ -75,8 +75,16 @@ function guideAt(time: number) {
 
 const poseAt = (time: number, still: boolean): Pose => {
   const s = guideAt(time)
-  return { time, yaw: s.yaw, L: s.L, R: s.R, sensor: s.voice ? 1 : 0, still }
+  const t = time % T
+  const side = g.targets[s.stage].side === 'L' ? -1 : 1
+  // 단계가 바뀔 때 앞 장면이 잠깐 옅어졌다가 다음 장면으로
+  const world = Math.min(smooth(t / 0.35), 1 - smooth((t - at.end) / (T - at.end)))
+  return { time, yaw: s.yaw, L: s.L, R: s.R, sensor: s.voice ? 1 : 0, still, stage: s.stage, aim: -side * TURN, world }
 }
+
+// 3D 앞 장면: 카메라 화면과 같은 그림을 흐리게. 머리를 TURN만큼 돌리면 목표가 OFF·0.38 화면폭(800단위 기준)만큼 움직이므로
+const panos = d.usage.map((_, i) => asset(`images/guide-pano-${i}.jpg`))
+const rpu = TURN / (OFF * 0.38 * 800)
 
 const pinIds: Pin[] = ['camera', 'sensor', 'L', 'R']
 // 점 기준 라벨 위치: 왼쪽 모터는 왼쪽으로, 카메라는 아래로 → 모형 가운데를 가리지 않는다.
@@ -143,7 +151,7 @@ export function GlassGuide() {
     import('./scene')
       .then(({ mount }) => {
         const canvas = canvasRef.current
-        return dead || !canvas ? undefined : mount(canvas, pinRefs.current as Record<Pin, HTMLElement>)
+        return dead || !canvas ? undefined : mount(canvas, pinRefs.current as Record<Pin, HTMLElement>, { panos, rpu })
       })
       .then((s) => {
         if (!s) return

@@ -1,11 +1,13 @@
 // 스마트글래스 3D 모형 (three.js). GlassGuide가 화면 근처에 오면 동적 import → three는 메인 번들과 분리된 청크.
-// 좌표: 시선(앞) = -z, 착용자 오른쪽 = +x. 카메라가 착용자 뒤 · 위에 있어 화면 왼쪽 = 착용자 왼쪽이다.
+// 좌표: 시선(앞) = -z, 착용자 오른쪽 = +x. 카메라가 착용자 어깨 뒤 · 위에 있어 화면 왼쪽 = 착용자 왼쪽이다.
+// 앞쪽은 단계별 장면(흐릿한 파노라마)이 원통 벽처럼 둘러싸고, 카메라 화각만큼이 하늘색으로 표시된다.
 // 시계는 GlassGuide가 갖고, 여기서는 받은 자세(Pose)를 그리기만 한다 (드래그 회전은 여기서 처리).
 // three/src에서 직접 가져온다: 렌더러(셰이더 포함)를 따로 불러와 500kB 넘는 청크 하나로 뭉치지 않게 하려고.
 // addons는 three 전체 빌드를 끌고 와서 쓰지 않는다 → 둥근 상자 대신 상자, 환경광은 studio()로.
 import {
   BackSide,
   BoxGeometry,
+  BufferGeometry,
   CanvasTexture,
   CapsuleGeometry,
   CircleGeometry,
@@ -14,6 +16,8 @@ import {
   DoubleSide,
   Group,
   HemisphereLight,
+  LineBasicMaterial,
+  LineSegments,
   Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
@@ -23,6 +27,7 @@ import {
   PlaneGeometry,
   Scene,
   SRGBColorSpace,
+  TextureLoader,
   TorusGeometry,
   Vector3,
   type Material,
@@ -44,6 +49,16 @@ export type Pose = {
   sensor: number
   /** 모션 감소: 흔들림 없이, 링은 퍼지는 중간 모습으로 고정 */
   still: boolean
+  /** 지금 단계(앞 장면 파노라마 선택) · 목표가 있는 방향(rad, + = 왼쪽) · 장면 보임 0–1 (단계가 바뀔 때 페이드) */
+  stage: number
+  aim: number
+  world: number
+}
+export type Options = {
+  /** 단계별 앞 장면 이미지 (카메라 화면 장면 1600×400을 흐리게) */
+  panos: string[]
+  /** 장면 1단위가 몇 rad인지 (카메라 화면 800단위 = 카메라 화각) */
+  rpu: number
 }
 export type GuideScene = { update(pose: Pose): void; dispose(): void }
 
@@ -77,10 +92,10 @@ const rings = (radius: number) =>
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k
 
-/** 메시의 geometry · material을 모두 해제 */
+/** 메시 · 선의 geometry · material을 모두 해제 */
 const free = (root: Object3D) =>
   root.traverse((o) => {
-    if (o instanceof Mesh) {
+    if (o instanceof Mesh || o instanceof LineSegments) {
       o.geometry.dispose()
       ;(o.material as Material).dispose()
     }
@@ -124,7 +139,11 @@ function shadowTexture() {
   return tex
 }
 
-export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLElement>): Promise<GuideScene> {
+export async function mount(
+  canvas: HTMLCanvasElement,
+  pins: Record<Pin, HTMLElement>,
+  opts: Options,
+): Promise<GuideScene> {
   // three가 오류를 찍고 던지기 전에 먼저 확인 → GlassGuide가 사진으로 대신한다
   const gl = canvas.getContext('webgl2', { antialias: true, alpha: true })
   if (!gl) throw new Error('WebGL2 unavailable')
@@ -145,9 +164,9 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
   key.position.set(-3, 6, 5)
   scene.add(key)
 
-  const look = new Vector3(0, 0, 0.1) // 모형 가운데
-  const eye = new Vector3(0, 10.7, 10.7) // 뒤 · 위 45°에서 본다
-  const camera = new PerspectiveCamera(20, 1, 0.1, 100) // 좁은 화각: 원근 왜곡을 줄여 안경다리가 자연스럽게
+  const look = new Vector3(0, 0.2, -3) // 안경 너머 앞쪽
+  const eye = new Vector3(0, 3.6, 11.6) // look 기준: 착용자 어깨 뒤 · 조금 위에서 앞을 본다
+  const camera = new PerspectiveCamera(40, 1, 0.1, 100)
   const root = new Group() // 드래그로 돌리는 보는 각도
   const head = new Group() // 머리를 돌리는 방향 (목 축이 회전 중심)
   const model = new Group()
@@ -235,6 +254,53 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
   shadow.position.set(0, -1, 1.3)
   model.add(bridge, board, header, cam, camLens, ...pulses, shadow)
 
+  /* ── 앞에 보이는 장면: 머리 축을 둘러싼 원통 벽 (머리를 돌려도 장면은 그대로, 단계마다 바뀐다) ── */
+  const R = 9
+  const arc = 1600 * opts.rpu // 장면 폭 → 각도
+  const fov = 800 * opts.rpu // 카메라 화면 폭 → 화각
+  const H = 400 * opts.rpu * R
+  const loader = new TextureLoader()
+  const panoTex = opts.panos.map((url) => {
+    const t = loader.load(url, () => draw())
+    t.colorSpace = SRGBColorSpace
+    t.repeat.x = -1 // 원통 안쪽에서 보므로 좌우를 뒤집는다 → 장면 오른쪽 = 착용자 오른쪽
+    t.offset.x = 1
+    return t
+  })
+  const panoMat = new MeshBasicMaterial({
+    map: panoTex[0],
+    side: BackSide,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    toneMapped: false,
+  })
+  const pano = new Mesh(new CylinderGeometry(R, R, H, 96, 1, true, Math.PI - arc / 2, arc), panoMat)
+  pano.renderOrder = -2
+  root.add(pano)
+
+  // 카메라 화각: 지금 카메라 화면에 들어오는 벽의 범위 (머리와 함께 돈다)
+  const wall = (th: number, y: number) => new Vector3((R - 0.06) * Math.sin(th), y, (R - 0.06) * Math.cos(th))
+  const [a0, a1] = [Math.PI - fov / 2, Math.PI + fov / 2]
+  const band = new Mesh(
+    new CylinderGeometry(R - 0.06, R - 0.06, H, 48, 1, true, a0, fov),
+    new MeshBasicMaterial({ color: C.sky, side: BackSide, transparent: true, opacity: 0.2, depthWrite: false, toneMapped: false }),
+  )
+  band.renderOrder = -1
+  const edge: Vector3[] = []
+  for (const y of [H / 2, -H / 2])
+    for (let i = 0; i < 32; i++) edge.push(wall(a0 + (fov * i) / 32, y), wall(a0 + (fov * (i + 1)) / 32, y))
+  for (const th of [a0, a1]) edge.push(wall(th, H / 2), wall(th, -H / 2))
+  // 렌즈에서 화각 네 모서리로 뻗는 선 (렌즈 = 모형의 camLens 자리, 머리 좌표)
+  const lensAt = new Vector3(0, -0.14, -0.22 + model.position.z)
+  const rays = [a0, a1].flatMap((th) => [H / 2, -H / 2].flatMap((y) => [lensAt, wall(th, y)]))
+  const line = (pts: Vector3[], opacity: number) =>
+    new LineSegments(
+      new BufferGeometry().setFromPoints(pts),
+      new LineBasicMaterial({ color: C.blue, transparent: true, opacity, depthWrite: false, toneMapped: false }),
+    )
+  head.add(band, line(edge, 0.7), line(rays, 0.35))
+
   // HTML 라벨이 붙는 3D 지점 (모형 기준)
   const at: Record<Pin, Vector3> = {
     camera: new Vector3(0, -0.32, -0.16),
@@ -244,15 +310,16 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
   }
 
   /* ── 그리기 ── */
-  let pose: Pose = { time: 0, yaw: 0, L: 0, R: 0, sensor: 0, still: true }
+  let pose: Pose = { time: 0, yaw: 0, L: 0, R: 0, sensor: 0, still: true, stage: 0, aim: 0, world: 1 }
   let last = 0
   let sensorLevel = 0
   let sensorPhase = 0
   let w = 0
   let h = 0
-  let view = 0 // 드래그로 돌린 양
+  let view = 0 // 드래그로 돌린 양 (좌우)
   let vel = 0
-  let drag: number | null = null
+  let pitch = 0 // 위아래 (마우스만: 터치의 세로 드래그는 페이지 스크롤)
+  let drag: { x: number; y: number } | null = null
 
   const v = new Vector3()
   const ease = (from: number, to: number, dt: number) => from + (to - from) * (1 - Math.exp(-dt * 8))
@@ -272,10 +339,14 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
       view += vel
       vel *= 0.9
       view = Math.atan2(Math.sin(view), Math.cos(view)) * 0.985 // 놓으면 천천히 뒤에서 보는 각도로 돌아온다
+      pitch *= 0.985
     } else if (dt > 0) vel *= 0.8 // 잡은 채 멈추면 관성도 줄어든다
-    root.rotation.y = view
+    root.rotation.set(pitch, view, 0)
     root.position.y = p.still ? 0 : Math.sin(p.time * 1.1) * 0.04
     head.rotation.y = p.yaw
+    pano.rotation.y = p.aim // 목표(장면 가운데)가 있는 방향
+    panoMat.map = panoTex[p.stage] ?? panoTex[0]
+    panoMat.opacity = 0.92 * p.world
 
     motors.forEach((m, i) => {
       const s = i ? 1 : -1
@@ -314,7 +385,7 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
     if (!w || !h) return
     renderer.setSize(w, h, false)
     camera.aspect = w / h
-    const k = Math.max(1, 1.34 / camera.aspect) // 4:3보다 좁으면 뒤로 물러나 전체가 들어오게
+    const k = Math.max(1, 1 / camera.aspect) // 세로로 긴 화면이면 뒤로 물러나 안경 전체가 들어오게
     camera.position.copy(eye).multiplyScalar(k).add(look)
     camera.lookAt(look)
     camera.updateProjectionMatrix()
@@ -326,17 +397,18 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
   ro.observe(canvas)
   resize()
 
-  // 가로 드래그로 회전 (세로는 touch-action: pan-y로 페이지 스크롤)
+  // 드래그로 돌려 보기: 좌우는 모두, 위아래는 마우스만 (터치의 세로는 touch-action: pan-y로 페이지 스크롤)
   const down = (e: PointerEvent) => {
-    drag = e.clientX
+    drag = { x: e.clientX, y: e.clientY }
     vel = 0
     canvas.setPointerCapture(e.pointerId)
   }
   const move = (e: PointerEvent) => {
     if (drag === null) return
-    vel = (e.clientX - drag) * 0.01
+    vel = (e.clientX - drag.x) * 0.01
     view += vel
-    drag = e.clientX
+    if (e.pointerType === 'mouse') pitch = Math.min(0.5, Math.max(-0.2, pitch + (e.clientY - drag.y) * 0.006))
+    drag = { x: e.clientX, y: e.clientY }
     draw()
   }
   const up = () => {
@@ -360,6 +432,7 @@ export async function mount(canvas: HTMLCanvasElement, pins: Record<Pin, HTMLEle
       canvas.removeEventListener('pointercancel', up)
       free(scene)
       tex.dispose()
+      for (const t of panoTex) t.dispose()
       env.dispose()
       renderer.dispose()
     },
