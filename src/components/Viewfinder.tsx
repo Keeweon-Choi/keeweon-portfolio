@@ -3,6 +3,7 @@ import { useLive } from './fx/loop'
 
 type ViewfinderProps = { state: number; fps: number }
 type Point = { x: number; y: number }
+type Box = { x: number; y: number; w: number; h: number }
 
 const links = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -14,7 +15,8 @@ const links = [
 
 const fingerTones = ['#d6a082', '#8ec9e8', '#e1be8a', '#c4c7df', '#d59b86']
 const pad = (n: number) => String(n).padStart(5, '0')
-const easeOut = (n: number) => 1 - (1 - Math.max(0, Math.min(1, n))) ** 3
+const clamp = (n: number, min = 0, max = 1) => Math.max(min, Math.min(max, n))
+const easeOut = (n: number) => 1 - (1 - clamp(n)) ** 3
 
 /** 처리 주기만큼만 새 장면을 그려, 병목이 만든 끊김도 화면에서 읽히게 한다. */
 export function Viewfinder({ state, fps }: ViewfinderProps) {
@@ -34,10 +36,10 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
     let frame = 0
     let raf = 0
 
-    const fontSize = () => Math.max(10, Math.min(14, height * 0.037))
+    const fontSize = () => Math.max(width < 420 ? 8 : 11, Math.min(14, height * 0.037))
     const text = (value: string, x: number, y: number, color: string, size = fontSize(), align: CanvasTextAlign = 'left') => {
       ctx.fillStyle = color
-      ctx.font = `500 ${size}px "JetBrains Mono Variable", monospace`
+      ctx.font = '500 ' + size + 'px "JetBrains Mono Variable", monospace'
       ctx.textAlign = align
       ctx.fillText(value, x, y)
       ctx.textAlign = 'left'
@@ -46,14 +48,13 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
     const tag = (x: number, y: number, value: string, color: string) => {
       const size = fontSize()
       const h = size + 9
-      ctx.font = `700 ${size}px "JetBrains Mono Variable", monospace`
+      ctx.font = '700 ' + size + 'px "JetBrains Mono Variable", monospace'
       const w = ctx.measureText(value).width + 12
-      const tx = Math.max(5, Math.min(width - w - 5, x))
-      const ty = Math.max(5, Math.min(height - h - 5, y))
+      const tx = clamp(x, 5, width - w - 5)
+      const ty = clamp(y, 5, height - h - 5)
       ctx.fillStyle = color
       ctx.fillRect(tx, ty, w, h)
       text(value, tx + 6, ty + size + 1, '#101b27', size)
-      return { w, h }
     }
 
     const bracket = (x: number, y: number, dx: number, dy: number) => {
@@ -65,32 +66,130 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       ctx.stroke()
     }
 
-    const drawHand = (time: number, door: { x: number; y: number; w: number; h: number }, stopped: boolean) => {
+    const centerOf = (box: Box): Point => ({ x: box.x + box.w / 2, y: box.y + box.h / 2 })
+
+    const drawGuide = (from: Point, target: Point, color: string) => {
+      ctx.save()
+      ctx.setLineDash([4, 5])
+      ctx.strokeStyle = color
+      ctx.globalAlpha = 0.75
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(from.x, from.y)
+      ctx.lineTo(target.x, target.y)
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.beginPath()
+      ctx.arc(target.x, target.y, 2.5, 0, Math.PI * 2)
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.restore()
+    }
+
+    // ref와 박스의 실제 픽셀 좌표만으로 진동을 결정한다. 애니메이션 시간표에는 의존하지 않는다.
+    const motorState = (reference: Point, box: Box) => {
+      const target = centerOf(box)
+      const dx = target.x - reference.x
+      const dy = target.y - reference.y
+      const normalized = Math.hypot(dx, dy) / Math.max(1, Math.max(box.w, box.h))
+      const aligned = normalized <= 0.9
+      const approach = 1 - clamp(normalized / 2.5)
+      const strength = aligned
+        ? 0.45 + 0.55 * (1 - normalized / 0.9)
+        : 0.22 + 0.58 * approach
+      return {
+        left: aligned || dx < 0 ? strength : 0,
+        right: aligned || dx >= 0 ? strength : 0,
+      }
+    }
+
+    const drawMotor = (label: 'L' | 'R', x: number, y: number, direction: -1 | 1, strength: number, color: string, time: number) => {
+      const lit = strength > 0
+      const alpha = lit ? 0.36 + strength * 0.64 : 0.22
+      const pulse = lit ? 1 + strength * (0.07 + 0.09 * (0.5 + 0.5 * Math.sin(time * 14))) : 1
+      const size = Math.max(10, fontSize() * 0.93)
+      ctx.save()
+      ctx.globalAlpha = alpha
+      ctx.strokeStyle = lit ? color : 'rgba(207, 223, 235, 0.65)'
+      ctx.fillStyle = lit ? color : 'rgba(207, 223, 235, 0.65)'
+      ctx.lineWidth = 1.25 + strength * 0.7
+      text(label, x, y + 4, lit ? color : 'rgba(207, 223, 235, 0.65)', size, label === 'R' ? 'right' : 'left')
+      const bodyX = x + (label === 'L' ? 17 : -31)
+      ctx.strokeRect(bodyX, y - 7 * pulse, 14 * pulse, 13 * pulse)
+      ctx.beginPath()
+      ctx.moveTo(bodyX + 14 * pulse, y - 3 * pulse)
+      ctx.lineTo(bodyX + 18 * pulse, y - 3 * pulse)
+      ctx.moveTo(bodyX + 14 * pulse, y + 2 * pulse)
+      ctx.lineTo(bodyX + 18 * pulse, y + 2 * pulse)
+      ctx.stroke()
+      const arcs = strength > 0.78 ? 3 : strength > 0.58 ? 2 : strength > 0 ? 1 : 0
+      for (let i = 0; i < arcs; i += 1) {
+        const offset = (i + 1) * 5 * direction
+        const arcX = direction < 0 ? bodyX - 2 + offset : bodyX + 16 * pulse + offset
+        ctx.beginPath()
+        ctx.arc(arcX, y - 0.5, 4 + i * 2, direction < 0 ? -Math.PI / 2 : Math.PI / 2, direction < 0 ? Math.PI / 2 : Math.PI * 1.5)
+        ctx.stroke()
+      }
+      ctx.restore()
+    }
+
+    const drawMotorHud = (reference: Point, targetBox: Box, color: string, sensor: boolean, time: number) => {
+      const motors = motorState(reference, targetBox)
+      const baseY = height - 25
+      if (sensor) text('distance → voice  ▮▮▮▯▯', 11, height - 47, '#8ec9e8', fontSize())
+      text('vibration', width / 2, height - 45, 'rgba(207, 223, 235, 0.72)', fontSize(), 'center')
+      drawMotor('L', 12, baseY, -1, motors.left, color, time)
+      drawMotor('R', width - 13, baseY, 1, motors.right, color, time)
+    }
+
+    const drawReticle = (reference: Point) => {
+      ctx.save()
+      ctx.strokeStyle = '#8ec9e8'
+      ctx.lineWidth = 1.3
+      ctx.beginPath()
+      ctx.arc(reference.x, reference.y, Math.max(8, height * 0.026), 0, Math.PI * 2)
+      ctx.moveTo(reference.x - 13, reference.y)
+      ctx.lineTo(reference.x + 13, reference.y)
+      ctx.moveTo(reference.x, reference.y - 13)
+      ctx.lineTo(reference.x, reference.y + 13)
+      ctx.stroke()
+      ctx.restore()
+      text('viewpoint', reference.x + 15, reference.y + 18, '#8ec9e8', fontSize())
+    }
+
+    const drawHand = (time: number, door: Box, stopped: boolean) => {
       const cycle = time % 4.8
-      const pointing = stopped ? easeOut((cycle - 1.55) / 0.55) : 0
-      const search = cycle < 1.55 ? cycle : cycle - 3.8
       const scale = Math.max(112, Math.min(height * 0.53, width * 0.37))
-      const target = { x: door.x + door.w * 0.47, y: door.y + door.h * 0.42 }
-      // 손목 기준: 검지는 문을 향해 길게 펴고, 나머지 손가락은 손바닥 쪽으로 자연스럽게 접힌다.
+      // 검지만 일직선으로 뻗고, 세 손가락의 끝은 다시 손바닥 쪽으로 감기는 자세다.
       const pose = [
-        [0, 0], [-0.2, -0.1], [-0.33, -0.2], [-0.42, -0.29], [-0.47, -0.36],
-        [-0.08, -0.27], [-0.12, -0.43], [-0.18, -0.6], [-0.25, -0.75],
-        [0.03, -0.34], [-0.02, -0.52], [0.03, -0.62], [0.14, -0.61],
-        [0.18, -0.3], [0.15, -0.47], [0.24, -0.55], [0.34, -0.49],
-        [0.33, -0.22], [0.37, -0.34], [0.45, -0.39], [0.52, -0.32],
+        [0, 0], [-0.14, -0.06], [-0.27, -0.1], [-0.36, -0.15], [-0.42, -0.19],
+        [-0.08, -0.24], [-0.1, -0.51], [-0.12, -0.79], [-0.14, -1.07],
+        [0.09, -0.23], [0.1, -0.4], [0.2, -0.44], [0.24, -0.28],
+        [0.23, -0.15], [0.32, -0.29], [0.37, -0.17], [0.28, -0.06],
+        [0.32, -0.05], [0.44, -0.13], [0.48, 0], [0.37, 0.07],
       ]
-      const searchWrist = {
-        x: width * (0.79 + Math.sin(search * 2.4) * 0.045),
-        y: height * (0.99 + Math.cos(search * 2.1) * 0.035),
+      const searchWrist = (at: number) => ({
+        x: width * (0.93 + Math.sin(at * 2.4) * 0.025),
+        y: height * (0.99 + Math.cos(at * 2.1) * 0.035),
+      })
+      const searchTip = (at: number) => {
+        const wrist = searchWrist(at)
+        return { x: wrist.x + pose[8][0] * scale, y: wrist.y + pose[8][1] * scale }
       }
-      const pointWrist = { x: target.x - pose[8][0] * scale, y: target.y - pose[8][1] * scale }
-      const wrist = {
-        x: searchWrist.x + (pointWrist.x - searchWrist.x) * pointing,
-        y: searchWrist.y + (pointWrist.y - searchWrist.y) * pointing,
+      const target = centerOf(door)
+      const start = searchTip(1.55)
+      const q = clamp((cycle - 1.55) / 1.72)
+      // 끝에서 조금 지나쳤다가 돌아오므로, 좌우 모터가 실제로 한 번 반전된다.
+      const travel = easeOut(q) + Math.sin(Math.PI * q) * 0.15
+      const desiredTip = {
+        x: start.x + (target.x - start.x) * travel,
+        y: start.y + (target.y - start.y) * travel - Math.sin(Math.PI * q) * door.h * 0.12,
       }
+      const wrist = stopped
+        ? { x: desiredTip.x - pose[8][0] * scale, y: desiredTip.y - pose[8][1] * scale }
+        : searchWrist(cycle)
       const points: Point[] = pose.map(([x, y]) => ({ x: wrist.x + x * scale, y: wrist.y + y * scale }))
 
-      // 낮은 알파의 손 실루엣을 먼저 깔아 실제 카메라의 트래킹 오버레이처럼 보이게 한다.
       ctx.save()
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
@@ -142,10 +241,7 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       ctx.stroke()
       ctx.restore()
 
-      const handTagX = Math.min(width - 140, Math.max(10, width * 0.08))
-      const handTagY = height * 0.78
-      tag(handTagX, handTagY, 'hand · 21 landmarks', '#e1be8a')
-      return { pointing }
+      return points[8]
     }
 
     const draw = (time: number) => {
@@ -153,13 +249,25 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       const slow = state === 0
       const accent = slow ? '#e3896d' : '#8ec9e8'
       const line = 'rgba(207, 223, 235, 0.65)'
-      const cycle = time % 4.8
-      const stopped = cycle >= 1.55 && cycle < 3.8
-      const stopX = width * 0.19
-      let busX: number
-      if (cycle < 1.55) busX = width + 18 - (width + 18 - stopX) * easeOut(cycle / 1.55)
-      else if (cycle < 3.8) busX = stopX
-      else busX = stopX - ((cycle - 3.8) / 1) ** 2 * (stopX + width * 0.72)
+      const cycle = time % (slow ? 4.8 : 5.4)
+      const stopped = slow ? cycle >= 1.55 && cycle < 3.8 : cycle >= 1.35 && cycle < 4.35
+      const stopX = width * 0.18
+      const busW = width * 0.58
+      const busH = height * 0.39
+      const busY = height * 0.75 - busH
+      let busLocalX: number
+      if (cycle < (slow ? 1.55 : 1.35)) {
+        const arrive = slow ? 1.55 : 1.35
+        busLocalX = width + 18 - (width + 18 - stopX) * easeOut(cycle / arrive)
+      } else if (cycle < (slow ? 3.8 : 4.35)) busLocalX = stopX
+      else busLocalX = stopX - ((cycle - (slow ? 3.8 : 4.35)) / 1) ** 2 * (stopX + width * 0.72)
+
+      const localDoorCenter = busLocalX + busW * 0.855
+      const turn = slow ? 0 : easeOut((cycle - 1.35) / 2.1)
+      const scenePan = -Math.max(0, localDoorCenter - width / 2) * turn
+      const busX = busLocalX + scenePan
+      const door: Box = { x: busX + busW * 0.79, y: busY + busH * 0.14, w: busW * 0.13, h: busH * 0.76 }
+      const detectedDoor: Box = { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }
 
       ctx.clearRect(0, 0, width, height)
       ctx.fillStyle = '#101b27'
@@ -181,15 +289,11 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       ctx.setLineDash([])
       ctx.strokeStyle = 'rgba(207, 223, 235, 0.25)'
       ctx.beginPath()
-      ctx.moveTo(width * 0.08, height * 0.22)
-      ctx.lineTo(width * 0.08, height * 0.7)
-      ctx.lineTo(width * 0.14, height * 0.7)
+      ctx.moveTo(width * 0.08 + scenePan, height * 0.22)
+      ctx.lineTo(width * 0.08 + scenePan, height * 0.7)
+      ctx.lineTo(width * 0.14 + scenePan, height * 0.7)
       ctx.stroke()
 
-      const busW = width * 0.58
-      const busH = height * 0.39
-      const busY = height * 0.75 - busH
-      const door = { x: busX + busW * 0.79, y: busY + busH * 0.14, w: busW * 0.13, h: busH * 0.76 }
       ctx.strokeStyle = line
       ctx.lineWidth = Math.max(1.2, Math.min(2, width * 0.006))
       ctx.beginPath()
@@ -211,39 +315,36 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
         ctx.stroke()
       })
 
-      const bus = { x: busX - 4, y: busY - 4, w: busW + 8, h: busH + busH * 0.115 + 8 }
-      const active = slow || !stopped ? bus : { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }
+      const bus: Box = { x: busX - 4, y: busY - 4, w: busW + 8, h: busH + busH * 0.115 + 8 }
+      const active = slow && !stopped ? bus : detectedDoor
       ctx.strokeStyle = accent
       ctx.lineWidth = 1.5
       ctx.strokeRect(active.x, active.y, active.w, active.h)
-      tag(active.x, active.y - fontSize() - 13, stopped && !slow ? 'door' : 'bus', accent)
+      tag(active.x, active.y - fontSize() - 13, active === bus ? 'bus' : 'door', accent)
+      if (slow && !stopped) {
+        ctx.strokeStyle = 'rgba(225, 190, 138, 0.9)'
+        ctx.lineWidth = 1.2
+        ctx.strokeRect(detectedDoor.x, detectedDoor.y, detectedDoor.w, detectedDoor.h)
+      }
 
+      let reference: Point
       if (slow) {
-        const detectedDoor = { x: door.x - 3, y: door.y - 3, w: door.w + 6, h: door.h + 6 }
-        if (stopped) {
-          ctx.strokeStyle = '#e1be8a'
-          ctx.lineWidth = 1.5
-          ctx.strokeRect(detectedDoor.x, detectedDoor.y, detectedDoor.w, detectedDoor.h)
-          // 버스 태그와 같은 윗변을 피해서 문 태그는 박스 안쪽에 둔다.
-          tag(detectedDoor.x + 5, detectedDoor.y + 5, 'door', '#e1be8a')
-        }
-        const hand = drawHand(time, detectedDoor, stopped)
-        if (stopped && hand.pointing > 0.95) {
-          tag(detectedDoor.x + 5, detectedDoor.y + detectedDoor.h - fontSize() - 13, 'pointing → door', '#e3896d')
-        }
+        reference = drawHand(time, detectedDoor, stopped)
+        drawGuide(reference, centerOf(detectedDoor), '#e1be8a')
+      } else {
+        reference = { x: width / 2, y: height / 2 }
+        drawGuide(reference, centerOf(detectedDoor), '#8ec9e8')
+        drawReticle(reference)
       }
 
       const mono = fontSize()
-      text(`processed frame #${pad(frame)}`, 11, 12 + mono, 'rgba(226, 239, 247, .8)', mono)
-      text(`${fps} FPS${slow ? '' : ' · TARGET CLASS ONLY'}`, 11, 18 + mono * 2, accent, mono)
+      text('processed frame #' + pad(frame), 11, 12 + mono, 'rgba(226, 239, 247, .8)', mono)
+      text(String(fps) + ' FPS' + (slow ? '' : ' · TARGET CLASS ONLY'), 11, 18 + mono * 2, accent, mono)
       if (slow) {
         text('Hand Tracking · CPU', width - 11, 12 + mono, '#e3896d', mono, 'right')
         text('Object Detection · GPU', width - 11, 18 + mono * 2, '#e3896d', mono, 'right')
-      } else {
-        const sensorY = height - 13
-        text('distance sensor  ▮▮▮▯▯', 11, sensorY, '#8ec9e8', mono)
-        text(stopped ? 'right →' : '← left', width - 11, sensorY, '#8ec9e8', mono, 'right')
       }
+      drawMotorHud(reference, detectedDoor, accent, !slow, time)
 
       ctx.strokeStyle = 'rgba(142, 201, 232, 0.6)'
       ctx.lineWidth = 1
@@ -263,7 +364,8 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
       canvas.height = Math.round(height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       last = -1
-      draw(3.4)
+      // 모션 감소에서는 정지 프레임에도 한쪽 모터의 안내가 남는다.
+      draw(state === 0 ? 1.2 : 1.5)
     }
 
     const observer = new ResizeObserver(fit)
@@ -287,8 +389,8 @@ export function Viewfinder({ state, fps }: ViewfinderProps) {
   }, [fps, live, state])
 
   const description = state === 0
-    ? '초기 설계의 카메라 시뮬레이션: 손 랜드마크가 버스 문을 가리키며 저속으로 객체를 탐지합니다.'
-    : '재설계의 카메라 시뮬레이션: 손 없이 현재 목표인 버스 또는 버스 문을 빠르게 탐지합니다.'
+    ? '초기 설계의 카메라 시뮬레이션: 검지 끝을 기준으로 문 중심이 왼쪽이면 왼쪽, 오른쪽이면 오른쪽 진동 모터가 안내하며, 가까워지면 양쪽 모터가 더 강하게 진동합니다.'
+    : '재설계의 카메라 시뮬레이션: 프레임 중앙의 고정 시점을 기준으로 문 중심이 왼쪽이면 왼쪽, 오른쪽이면 오른쪽 진동 모터가 안내하며, 정렬될수록 양쪽 모터가 더 강하게 진동합니다.'
 
   return (
     <figure ref={ref} className="min-w-0">
