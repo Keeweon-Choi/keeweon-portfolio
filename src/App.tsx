@@ -1,33 +1,33 @@
 import { MotionConfig } from 'motion/react'
-import { DeckNav } from './components/DeckNav'
-import { useDeck } from './hooks/useDeck'
+import { SiteHeader } from './components/SiteHeader'
+import { useChapters } from './hooks/useChapters'
+import { About } from './sections/About'
+import { Closing } from './sections/Closing'
 import { EdgeAI } from './sections/EdgeAI'
-import { Hero } from './sections/Hero'
+import { Intro } from './sections/Intro'
 import { Journey } from './sections/Journey'
 import { Neus } from './sections/Neus'
-import { Redesign } from './sections/Redesign'
 import { Segmentation } from './sections/Segmentation'
 import { SmartGlass } from './sections/SmartGlass'
-import { Thanks } from './sections/Thanks'
 import { WhatsNext } from './sections/WhatsNext'
 
-// 섹션 순서는 data/sections.ts와 같아야 한다.
+// 챕터 순서는 data/sections.ts와 같아야 한다.
 export default function App() {
-  const deck = useDeck()
+  const active = useChapters()
   return (
     <MotionConfig reducedMotion="user">
+      <SiteHeader active={active} />
       <main>
-        <Hero />
-        <Journey step={deck.steps.journey ?? 0} onStep={(s) => deck.setStep('journey', s)} onJump={deck.goToId} />
+        <Intro />
+        <About />
+        <Journey />
         <EdgeAI />
         <Segmentation />
         <SmartGlass />
-        <Redesign step={deck.steps.redesign ?? 0} onStep={(s) => deck.setStep('redesign', s)} />
         <Neus />
         <WhatsNext />
-        <Thanks />
+        <Closing />
       </main>
-      <DeckNav active={deck.active} onPrev={deck.prev} onNext={deck.next} onJump={deck.goTo} />
     </MotionConfig>
   )
 }

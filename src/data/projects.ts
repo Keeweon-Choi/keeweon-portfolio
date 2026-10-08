@@ -1,7 +1,7 @@
 // 발표 문구의 source of truth: keeweon-portfolio-context/ (CONTEXT.md, content/*.md)
 // 문서에 없는 사실은 넣지 않는다. '*강조*' 표기는 파란색 강조로 렌더링된다.
 // 내부 수치는 공개하지 않는다 (Edge AI는 normalized, Smart Glass FPS만 공개 가능).
-import type { SectionId } from './sections'
+import type { ChapterId } from './sections'
 
 export type Tone = 'muted' | 'blue' | 'warn'
 
@@ -11,7 +11,7 @@ export type JourneyItem = {
   field: string
   tagline: string
   summary: string
-  section?: SectionId
+  section?: ChapterId
   current?: boolean
   future?: boolean
 }
@@ -19,8 +19,7 @@ export type JourneyItem = {
 export const journeyIntro = {
   kicker: '다섯 개의 프로젝트, 하나의 질문',
   question: '모델이 동작한 이후, *실제 환경*에서는 어떤 문제가 생길까?',
-  axis: { from: '모델', to: '실제 시스템' },
-  hint: '프로젝트를 선택하면 짧은 설명이 열립니다.',
+  sub: '프로젝트를 거치며 관심이 모델 자체에서, 실제 환경에서 동작하는 시스템으로 넓어졌습니다.',
 }
 
 export const journey: JourneyItem[] = [
@@ -44,7 +43,8 @@ export const journey: JourneyItem[] = [
     project: 'Internship',
     field: 'Semantic Segmentation',
     tagline: '환경을 더 세밀하게 이해하기',
-    summary: '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 선정했습니다.',
+    summary:
+      '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 적합한 구조를 선정했습니다.',
     section: 'segmentation',
   },
   {
@@ -133,7 +133,8 @@ export const segmentation = {
     },
   ],
   credit: 'Figure: Stanford CS231n · photo CC0',
-  problem: '실제 시스템에서는 가장 정확한 모델이 항상 최선은 아니었습니다. 속도, 메모리, 하드웨어 제약을 함께 고려해야 했습니다.',
+  problem:
+    '실제 시스템에서는 가장 정확한 모델이 항상 최선은 아니었습니다. 속도, 메모리, 하드웨어 제약을 함께 고려해야 했습니다.',
   did: '여러 경량 Semantic Segmentation 구조를 동일 조건에서 구현 · 학습하고 비교했습니다.',
   criteria: ['Accuracy', 'Speed', 'Resource usage'],
   models: ['BiSeNetV2', 'Fast-SCNN', 'STDC', 'PP-LiteSeg', 'DeepLabV3+'],
@@ -176,11 +177,12 @@ export const smartGlass = {
 export type PipelineNode = { name: string; note?: string; tone?: Tone }
 
 export const redesign = {
+  kicker: 'Redesign',
+  heading: '2–3 FPS에서 *15 FPS+*로',
+  // 고정 패널에 그리는 두 상태 (0: 초기 설계, 1: 재설계)
   states: [
     {
       tab: '초기 설계',
-      kicker: 'Initial Design',
-      title: '손으로 가리킨 대상을 인식하는 구조',
       fps: '2–3',
       lit: 2.5, // 1초 동안 처리한 프레임 시각화 (2–3 FPS)
       input: [{ name: 'Camera' }] as PipelineNode[],
@@ -188,13 +190,9 @@ export const redesign = {
       modules: [{ name: 'Object Detection' }, { name: 'OCR' }] as PipelineNode[],
       group: { label: '모두 동시 실행', note: 'CPU / GPU 병목', tone: 'warn' as Tone },
       output: [{ name: 'Feedback' }] as PipelineNode[],
-      notesLabel: '실제 시스템에서 생긴 문제',
-      notes: ['여러 기능 동시 실행 → 처리 속도 저하', 'CPU / GPU 병목', '시각장애인이 먼저 목표를 가리켜야 하는 사용성 문제'],
     },
     {
       tab: '재설계',
-      kicker: 'Redesign',
-      title: '현재 상황에서 *꼭 필요한 정보만* 처리하자',
       fps: '15+',
       lit: 15,
       input: [{ name: 'Camera' }, { name: 'Distance Sensor' }] as PipelineNode[],
@@ -206,8 +204,31 @@ export const redesign = {
       ] as PipelineNode[],
       group: { label: '필요한 것만 실행', note: '해상도 · 기준값 조정', tone: 'blue' as Tone },
       output: [{ name: 'Decision', note: 'Vision + 거리 센서' }, { name: 'Voice · Vibration' }] as PipelineNode[],
-      notesLabel: '바꾼 것',
-      notes: [
+    },
+  ],
+  // 스크롤하며 읽는 텍스트 단계. state = 이 단계에서 패널이 보여줄 상태
+  story: [
+    {
+      state: 0,
+      label: 'Initial Design',
+      tone: 'warn' as Tone,
+      title: '손으로 가리킨 대상을 인식하는 구조',
+      text: '처음에는 손 위치를 추적해 사용자가 가리킨 대상을 인식하는 구조를 고려했습니다.',
+      listLabel: '실제 시스템에서 생긴 문제',
+      list: [
+        '여러 기능 동시 실행 → 처리 속도 저하',
+        'CPU / GPU 병목',
+        '시각장애인이 먼저 목표를 가리켜야 하는 사용성 문제',
+      ],
+    },
+    {
+      state: 1,
+      label: 'Redesign',
+      tone: 'blue' as Tone,
+      title: '현재 상황에서 *꼭 필요한 정보만* 처리하자',
+      text: '사용자가 지금 어느 단계에 있는지에 따라, 그 단계에 필요한 것만 처리하도록 구조를 바꿨습니다.',
+      listLabel: '바꾼 것',
+      list: [
         '단계별 필요한 객체만 탐지',
         'OCR 호출 주기 조정',
         '최근 탐지 결과 유지',
@@ -215,17 +236,25 @@ export const redesign = {
         '거리 센서와 Vision 결과 결합',
       ],
     },
+    {
+      state: 1,
+      label: 'Result',
+      tone: 'blue' as Tone,
+      title: '2–3 FPS → *15 FPS+*',
+      text: '실제 사용에서 병목을 발견하고 구조를 다시 설계해, 실시간 사용 수준으로 개선했습니다.',
+      quote:
+        '모델 하나를 개선하는 것보다, *실제 사용 환경을 이해하고 시스템 구조 전체를 다시 설계하는 것*이 더 중요한 경우도 있었다.',
+    },
   ],
   fpsLabel: 'FPS',
   stripLabel: '1초 동안 처리하는 프레임',
-  lesson:
-    '모델 하나를 개선하는 것보다, *실제 사용 환경을 이해하고 시스템 구조 전체를 다시 설계하는 것*이 더 중요한 경우도 있었다.',
 }
 
 export const neus = {
   status: '진행 중',
   title: 'Current Project — *NEUS*',
-  intro: '최근에는 오랜 기간 함께해온 팀원들과 NEUS 프로젝트를 진행하며, NLP와 LLM을 활용한 서비스 개발 경험도 넓히고 있습니다.',
+  intro:
+    '최근에는 오랜 기간 함께해온 팀원들과 NEUS 프로젝트를 진행하며, NLP와 LLM을 활용한 서비스 개발 경험도 넓히고 있습니다.',
   team: ['고교 시절부터 알고 지낸 팀원들', '자발적인 팀 프로젝트', '장기 협업'],
   shift: {
     beforeLabel: '지금까지',

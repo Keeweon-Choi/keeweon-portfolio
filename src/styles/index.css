@@ -1,8 +1,5 @@
 @import 'tailwindcss';
 
-/* 노트북(1280×720 · 1366×768) 같은 낮은 화면에서 간격을 줄일 때 */
-@custom-variant short (@media (max-height: 760px));
-
 @theme {
   --font-sans:
     'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo',
@@ -56,6 +53,8 @@
     background-color: var(--color-canvas);
     color: var(--color-ink);
     -webkit-text-size-adjust: 100%;
+    /* 목차 · 메뉴 링크(#anchor)는 부드럽게 이동 */
+    scroll-behavior: smooth;
   }
   body {
     font-family: var(--font-sans);
@@ -82,9 +81,6 @@
     outline: 2px solid var(--color-blue);
     outline-offset: 3px;
   }
-  [data-section]:focus {
-    outline: none;
-  }
   summary {
     list-style: none;
     cursor: pointer;
@@ -101,5 +97,9 @@
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important; /* 반복 애니메이션이 초고속으로 깜빡이지 않게 */
+  }
+  html {
+    scroll-behavior: auto;
   }
 }

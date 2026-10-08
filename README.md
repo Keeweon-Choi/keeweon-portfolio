@@ -13,24 +13,25 @@ npm run preview    # build 결과 확인 (http://localhost:4173)
 npm run lint
 ```
 
-## 발표 조작
+## 둘러보기
 
-| 키 | 동작 |
-| --- | --- |
-| `→` `PageDown` `Space` | 다음 (섹션 안에 단계가 있으면 단계 먼저: Journey → Pill 상세, Redesign → 15+ FPS) |
-| `←` `PageUp` `Shift+Space` | 이전 |
-| `Home` / `End` | 처음 / 마지막 |
+스크롤로 읽어 내려가는 한 페이지 사이트다(휠 hijacking 없음).
 
-마우스 휠은 평범하게 스크롤된다. 하단 바의 진행 표시를 눌러 섹션으로 바로 이동할 수 있고, 현재 섹션은 URL hash(`#smart-glass` 등)에 남아 새로고침해도 유지된다.
+- **표지 = 목차**: 맨 위 표지 오른쪽의 Contents에서 각 챕터로 이동한다.
+- **어디서든 목차로**: 상단 바의 `목차` 버튼, 각 챕터 머리의 `↑ 목차`, 마지막의 `목차로 돌아가기`.
+- **상단 바**: 지금 읽는 챕터 표시 + 읽은 만큼 차오르는 진행선. 현재 챕터는 URL hash(`#smart-glass` 등)에 남아 새로고침해도 유지된다.
+- **키보드**: `←` / `→` = 이전 / 다음 챕터. `Space` · `PageDown` · 휠은 브라우저 기본 스크롤.
+- **인터랙션**: Journey 타임라인(스크롤하면 선이 차오름) · Segmentation 비교 슬라이더(드래그, 키보드 ←/→) · Smart Glass 스크롤 스토리(2–3 FPS → 15+ FPS).
+- `prefers-reduced-motion`이면 움직임 없이 바로 최종 상태로 보인다.
 
 ## 구조
 
 ```
 src/
-  data/        발표 문구 (sections.ts 순서 = 발표 순서, projects.ts, profile.ts)
-  sections/    섹션별 UI
-  components/  Section(running head), DeckNav(하단 진행 표시), ui(공통 조각)
-  hooks/       useDeck — 키보드/버튼 섹션 이동 · 단계 · hash
+  data/        문구 (sections.ts 순서 = 챕터 순서, projects.ts, profile.ts)
+  sections/    챕터별 UI (Intro = 표지+목차, About, Journey, EdgeAI, Segmentation, SmartGlass, Neus, WhatsNext, Closing)
+  components/  SiteHeader(상단 바) · Chapter(챕터 머리 + 목차 링크) · motion(Reveal, CountUp) · ui
+  hooks/       useChapters(현재 챕터 · hash · ←/→), usePassed(스크롤 지점 통과 여부)
   styles/      Tailwind 테마 토큰 (색 · 폰트 · fluid type)
 public/images/ 웹용 이미지 (같은 파일명으로 덮어쓰면 교체)
 ```
