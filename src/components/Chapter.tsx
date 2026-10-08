@@ -1,6 +1,6 @@
 import { ArrowUp } from 'lucide-react'
-import { motion } from 'motion/react'
-import type { ReactNode } from 'react'
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
+import { useRef, type ReactNode } from 'react'
 import { chapters, type ChapterId } from '../data/sections'
 
 import { ease, pad } from '../lib/util'
@@ -15,6 +15,11 @@ type Props = { id: ChapterId; children: ReactNode; tone?: keyof typeof tones }
 
 /** 챕터 = 번호 · 이름 · '목차로' 링크가 붙은 섹션. 높이는 내용만큼 (슬라이드처럼 한 화면에 가두지 않는다) */
 export function Chapter({ id, children, tone = 'canvas' }: Props) {
+  const headerRef = useRef<HTMLElement>(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: headerRef, offset: ['start end', 'start 40%'] })
+  const fill = useSpring(scrollYProgress, { stiffness: 110, damping: 28, restDelta: 0.001 })
+  const fillClip = useTransform(fill, [0, 1], ['inset(100% 0 0 0)', 'inset(0% 0 0 0)'])
   const index = chapters.findIndex((c) => c.id === id)
   const c = chapters[index]
   return (
@@ -24,7 +29,7 @@ export function Chapter({ id, children, tone = 'canvas' }: Props) {
       className={`scroll-mt-14 px-gutter py-[clamp(4.5rem,13vh,9rem)] ${tones[tone]}`}
     >
       <div className="mx-auto max-w-page">
-        <header className="relative flex items-end justify-between gap-6 pb-4">
+        <header ref={headerRef} className="relative flex items-end justify-between gap-6 pb-4">
           <motion.div
             className="flex items-end gap-4 sm:gap-6"
             initial={{ opacity: 0, y: 16 }}
@@ -32,11 +37,14 @@ export function Chapter({ id, children, tone = 'canvas' }: Props) {
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease }}
           >
-            <span
-              aria-hidden
-              className="text-[clamp(3rem,6vw,5.5rem)] leading-[0.78] font-bold tracking-[-0.04em] text-transparent [-webkit-text-stroke:1.5px_var(--color-blue)]"
-            >
-              {pad(index + 1)}
+            <span aria-hidden className="relative block text-[clamp(3rem,6vw,5.5rem)] leading-[0.78] font-bold tracking-[-0.04em]">
+              <span className="block text-transparent [-webkit-text-stroke:1.5px_var(--color-blue)]">{pad(index + 1)}</span>
+              <motion.span
+                className="absolute inset-0 block text-blue"
+                style={{ clipPath: reduce ? 'inset(0% 0 0 0)' : fillClip }}
+              >
+                {pad(index + 1)}
+              </motion.span>
             </span>
             <div>
               {c.kicker && <p className="font-mono text-note tracking-[0.12em] text-muted uppercase">{c.kicker}</p>}

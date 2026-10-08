@@ -90,6 +90,21 @@
   }
 }
 
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-scroll 38s linear infinite;
+  will-change: transform;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -101,5 +116,9 @@
   }
   html {
     scroll-behavior: auto;
+  }
+  .marquee-track {
+    animation: none;
+    transform: none;
   }
 }

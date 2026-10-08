@@ -1,4 +1,5 @@
 import { MotionConfig } from 'motion/react'
+import { Marquee } from './components/Marquee'
 import { SiteHeader } from './components/SiteHeader'
 import { useChapters } from './hooks/useChapters'
 import { About } from './sections/About'
@@ -19,6 +20,7 @@ export default function App() {
       <SiteHeader active={active} />
       <main>
         <Intro />
+        <Marquee />
         <About />
         <Journey />
         <EdgeAI />

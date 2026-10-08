@@ -1,8 +1,7 @@
 import { ArrowDown, ArrowUpRight } from 'lucide-react'
 import { motion } from 'motion/react'
-import { Em } from '../components/ui'
 import { profile } from '../data/profile'
-import { chapters } from '../data/sections'
+import { chapters, type ChapterId } from '../data/sections'
 import { asset, ease, pad } from '../lib/util'
 
 /** 로드 직후 위에서부터 차례로 떠오른다 */
@@ -12,8 +11,18 @@ const rise = (i: number) => ({
   transition: { duration: 0.8, ease, delay: 0.1 + i * 0.09 },
 })
 
+const previews: Partial<Record<ChapterId, { src: string; position?: string }>> = {
+  about: { src: 'images/profile.jpg' },
+  journey: { src: 'images/pill-result.png' },
+  segmentation: { src: 'media/drive-seg-2.jpg', position: 'object-left' },
+  'smart-glass': { src: 'images/smartglass-worn.jpg' },
+  neus: { src: 'images/neus-compare.jpg' },
+}
+
 /** 표지 + 목차 */
 export function Intro() {
+  const [statementStart = '', statementEmphasis = '', statementEnd = ''] = profile.statement.split('*')
+
   return (
     <section id="top" aria-label="표지와 목차" className="relative scroll-mt-14 overflow-hidden px-gutter">
       {/* 은은한 모눈 — 왼쪽 위에서 퍼지다 사라진다 */}
@@ -28,20 +37,44 @@ export function Intro() {
             <img src={asset(profile.emblem)} alt="" className="size-[1.6em]" />
             {profile.affiliation}
           </motion.p>
-          <motion.h1
-            {...rise(1)}
-            className="mt-[clamp(1rem,3vh,2rem)] text-display font-bold tracking-[-0.045em] text-ink"
-          >
-            {profile.nameKo}
-            <span className="mt-[0.14em] block text-title font-light tracking-[-0.02em] text-muted">
-              {profile.nameEn}
+          <h1 className="mt-[clamp(1rem,3vh,2rem)] text-display font-bold tracking-[-0.045em] text-ink">
+            <span className="block overflow-hidden pb-[0.08em]">
+              <motion.span
+                initial={{ opacity: 0, y: '105%' }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.85, ease, delay: 0.24 }}
+                className="block"
+              >
+                {profile.nameKo}
+              </motion.span>
             </span>
-          </motion.h1>
+            <span className="mt-[0.14em] block overflow-hidden pb-[0.1em] text-title font-light tracking-[-0.02em] text-muted">
+              <motion.span
+                initial={{ opacity: 0, y: '105%' }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.85, ease, delay: 0.38 }}
+                className="block"
+              >
+                {profile.nameEn}
+              </motion.span>
+            </span>
+          </h1>
           <motion.p
             {...rise(2)}
             className="mt-[clamp(1.5rem,5vh,3rem)] max-w-[20em] text-heading leading-snug font-semibold tracking-[-0.02em] text-ink"
           >
-            <Em text={profile.statement} />
+            {statementStart}
+            <em className="relative whitespace-nowrap text-blue not-italic">
+              {statementEmphasis}
+              <motion.span
+                aria-hidden
+                className="absolute right-0 -bottom-[0.08em] left-0 h-[2px] origin-left bg-blue"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.65, ease, delay: 1.16 }}
+              />
+            </em>
+            {statementEnd}
           </motion.p>
           <motion.ul {...rise(3)} className="mt-6 flex flex-wrap gap-2">
             {profile.keywords.map((k) => (
@@ -75,28 +108,45 @@ export function Intro() {
             <p className="font-mono text-note text-muted">{pad(chapters.length)} chapters</p>
           </motion.div>
           <ol>
-            {chapters.map((c, i) => (
-              <motion.li key={c.id} {...rise(3 + i * 0.6)}>
-                <a
-                  href={`#${c.id}`}
-                  className="group grid grid-cols-[2.75rem_1fr_auto] items-center gap-x-3 border-b border-line py-[clamp(0.75rem,1.9vh,1.15rem)] transition-colors hover:bg-sky-wash sm:px-2"
-                >
-                  <span className="font-mono text-note text-faint transition-colors group-hover:text-blue">
-                    {pad(i + 1)}
-                  </span>
-                  <span>
-                    <span className="flex items-center gap-2 text-node font-semibold tracking-[-0.02em] text-ink">
-                      {c.label}
+            {chapters.map((c, i) => {
+              const preview = previews[c.id]
+              return (
+                <motion.li key={c.id} {...rise(3 + i * 0.6)}>
+                  <a
+                    href={`#${c.id}`}
+                    className="group relative grid grid-cols-[2.75rem_1fr_auto] items-center gap-x-3 overflow-hidden border-b border-line py-[clamp(0.75rem,1.9vh,1.15rem)] sm:px-2"
+                  >
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-0 left-0 w-full origin-left scale-x-0 bg-sky-wash transition-transform duration-500 group-hover:scale-x-100 group-focus:scale-x-100 group-focus-visible:scale-x-100"
+                    />
+                    <span className="relative font-mono text-note text-faint transition-colors group-hover:text-blue group-focus:text-blue group-focus-visible:text-blue">
+                      {pad(i + 1)}
                     </span>
-                    <span className="mt-0.5 block text-note text-muted">{c.toc}</span>
-                  </span>
-                  <ArrowUpRight
-                    aria-hidden
-                    className="size-5 text-faint transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue"
-                  />
-                </a>
-              </motion.li>
-            ))}
+                    <span className="relative">
+                      <span className="flex items-center gap-2 text-node font-semibold tracking-[-0.02em] text-ink">
+                        {c.label}
+                      </span>
+                      <span className="mt-0.5 block text-note text-muted">{c.toc}</span>
+                    </span>
+                    {preview ? (
+                      <span className="relative h-10 w-16 overflow-hidden rounded-[3px] border border-line bg-surface opacity-0 translate-x-2 transition-[opacity,transform] duration-300 group-hover:translate-x-0 group-hover:opacity-100 group-focus:translate-x-0 group-focus:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100">
+                        <img
+                          src={asset(preview.src)}
+                          alt=""
+                          className={`size-full object-cover ${preview.position ?? ''}`}
+                        />
+                      </span>
+                    ) : (
+                      <ArrowUpRight
+                        aria-hidden
+                        className="relative size-5 text-faint transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue group-focus:translate-x-0.5 group-focus:-translate-y-0.5 group-focus:text-blue group-focus-visible:translate-x-0.5 group-focus-visible:-translate-y-0.5 group-focus-visible:text-blue"
+                      />
+                    )}
+                  </a>
+                </motion.li>
+              )
+            })}
           </ol>
         </nav>
       </div>

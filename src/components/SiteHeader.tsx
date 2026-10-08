@@ -1,17 +1,30 @@
 import { TableOfContents } from 'lucide-react'
-import { motion, useScroll, useSpring } from 'motion/react'
+import { motion, useMotionValueEvent, useScroll, useSpring } from 'motion/react'
+import { useState } from 'react'
 import { chapters, type ChapterId } from '../data/sections'
 import { profile } from '../data/profile'
 import { pad } from '../lib/util'
 
 /** 상단 고정 바: 이름 · 챕터 메뉴(현재 위치 표시) · 목차 버튼 · 읽은 만큼 차오르는 진행선 */
 export function SiteHeader({ active }: { active: ChapterId | null }) {
-  const { scrollYProgress } = useScroll()
+  const { scrollY, scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, { stiffness: 220, damping: 40, restDelta: 0.001 })
+  const [scrolled, setScrolled] = useState(false)
   const index = chapters.findIndex((c) => c.id === active)
 
+  useMotionValueEvent(scrollY, 'change', (latest) => {
+    setScrolled((wasScrolled) => {
+      const nextScrolled = latest > 40
+      return wasScrolled === nextScrolled ? wasScrolled : nextScrolled
+    })
+  })
+
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-canvas px-gutter">
+    <header
+      className={`sticky top-0 z-50 border-b border-line bg-canvas px-gutter transition-shadow duration-300 ${
+        scrolled ? 'shadow-[0_5px_18px_rgb(23_35_49_/_0.08)]' : 'shadow-none'
+      }`}
+    >
       <div className="mx-auto flex h-14 max-w-page items-center gap-6">
         <a
           href="#top"
