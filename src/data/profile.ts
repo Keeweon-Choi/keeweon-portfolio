@@ -13,12 +13,15 @@ export const profile = {
     { label: '이름', value: '최기원 · Keeweon Choi' },
     { label: '생년월일', value: '2000.07.19' },
     { label: '학력', value: '인하대학교 컴퓨터공학과 졸업', note: '2026.08.21' },
-    { label: '성격', value: 'ISTJ', note: '문제가 생기면 원인을 하나씩 좁혀가며 직접 확인하고 해결하는 편입니다.' },
+    { label: '성격', value: 'ISTJ' },
     { label: '취미', value: '볼링 · 탁구' },
   ],
   photo: 'images/profile.jpg',
   emblem: 'images/inha-emblem.png',
-  hobbyPhoto: { src: 'images/bowling.jpg', alt: '볼링장 점수판', caption: '취미 · 볼링' },
+  hobbyPhotos: [
+    { src: 'images/bowling.jpg', alt: '볼링장 점수판', caption: '볼링' },
+    { src: 'images/tabletennis.jpg', alt: '제41회 전국대학동호인연맹배 탁구대회 단체 사진', caption: '탁구' },
+  ],
 }
 
 export const future = {

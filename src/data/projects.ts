@@ -60,7 +60,8 @@ export const journey: JourneyItem[] = [
     project: 'NEUS',
     field: 'NLP / LLM',
     tagline: '문제에 맞는 AI 기술로 서비스 만들기',
-    summary: '오랜 기간 함께해온 팀원들과 NLP와 LLM을 활용한 서비스 개발 경험을 넓히고 있습니다.',
+    summary:
+      '같은 사건을 다룬 여러 언론의 보도를 모아 비교하고, 사실과 주장을 나눠 중립 기사로 재구성하는 뉴스 서비스입니다.',
     section: 'neus',
     current: true,
   },
@@ -116,23 +117,30 @@ export const edgeAI = {
 export const segmentation = {
   title: 'Object Detection에서 *Scene Understanding*으로',
   summary: '기업 현장실습에서 실시간 Semantic Segmentation 모델을 비교하고, 실제 적용 환경에 맞는 구조를 선정했습니다.',
-  compare: [
-    {
-      name: 'Object Detection',
-      question: '무엇이 어디에 있는가?',
-      unit: 'box 단위',
-      src: 'images/seg-detection.jpg',
-      alt: '고양이 사진에서 고양이 위치를 사각형 box로 표시한 예시',
-    },
-    {
-      name: 'Semantic Segmentation',
-      question: '각 영역이 무엇인가?',
-      unit: 'pixel 단위',
-      src: 'images/seg-mask.jpg',
-      alt: '같은 사진을 고양이, 잔디, 나무, 하늘 영역으로 색칠해 구분한 예시',
-    },
+  // 실제 주행 영상(Cityscapes) 위의 실시간 Semantic Segmentation 데모. 영상 = [카메라 | 예측] 좌우로 붙인 한 파일
+  drive: {
+    scenes: [
+      { src: 'media/drive-seg-2.mp4', poster: 'media/drive-seg-2.jpg', label: '도심 · 보행자' },
+      { src: 'media/drive-seg-1.mp4', poster: 'media/drive-seg-1.jpg', label: '대로 · 차량' },
+    ],
+    left: { tag: 'camera' },
+    right: { tag: 'segmentation' },
+    alt: '자동차 주행 영상과, 같은 영상을 도로 · 인도 · 차량 · 사람 · 건물 · 식생 · 하늘로 나눈 Semantic Segmentation 결과를 경계선으로 비교',
+    legend: [
+      { label: 'road', color: '#804080' },
+      { label: 'sidewalk', color: '#f423e8' },
+      { label: 'car', color: '#00008e' },
+      { label: 'person', color: '#dc143c' },
+      { label: 'building', color: '#464646' },
+      { label: 'vegetation', color: '#6b8e23' },
+      { label: 'sky', color: '#4682b4' },
+    ],
+  },
+  concept: [
+    { name: 'Object Detection', question: '무엇이 어디에 있는가?', unit: 'box 단위' },
+    { name: 'Semantic Segmentation', question: '각 영역이 무엇인가?', unit: 'pixel 단위' },
   ],
-  credit: 'Figure: Stanford CS231n · photo CC0',
+  credit: 'Video: Cityscapes 주행 장면 · PIDNet 실시간 Semantic Segmentation 데모 (github.com/XuJiacong/PIDNet, MIT)',
   problem:
     '실제 시스템에서는 가장 정확한 모델이 항상 최선은 아니었습니다. 속도, 메모리, 하드웨어 제약을 함께 고려해야 했습니다.',
   did: '여러 경량 Semantic Segmentation 구조를 동일 조건에서 구현 · 학습하고 비교했습니다.',
@@ -164,6 +172,29 @@ export const smartGlass = {
   role: 'Vision AI 기반 사용자 모듈 전담',
   roleItems: ['카메라 기반 객체 인식', 'OCR', '거리 센서 연동', '진동 · 음성 피드백', 'Jetson 실시간 처리 파이프라인'],
   roleNote: '버스 · 정류장 간 예약 · 통신 모듈은 다른 팀원 담당',
+  overview: {
+    src: 'images/smartglass-overview.jpg',
+    alt: '시스템 개요: ① 점자 키패드로 버스 예약 ② 기사 알림 ③ 정류장 진입 시 번호 음성 안내 ④ Vision AI 기반 승하차 유도',
+    parts: [
+      { no: '①', label: '점자 키패드로 버스 예약' },
+      { no: '②', label: '기사 알림' },
+      { no: '③', label: '정류장 진입 시 번호 음성 안내' },
+      { no: '④', label: 'Vision AI 기반 승하차 유도', mine: true },
+    ],
+  },
+  referencesLabel: '참고했던 기존 보조 기술의 한계',
+  references: [
+    {
+      name: '아이폰 감지 모드',
+      limit: '문 등 일부 사물만 인식해, 승차부터 하차까지 버스 이용 전 과정을 지원하기 어려움',
+    },
+    {
+      name: '시각장애인 독서 보조 스마트글래스',
+      limit: '손가락으로 가리킨 영역을 읽어주는 방식 — 보이지 않는 목표물을 먼저 가리켜야 함',
+    },
+  ],
+  gap: '그래서 탑승 순간에서 끝나지 않고, *승차 – 결제 – 착석 – 하차*를 하나의 안내 흐름으로 설계했습니다.',
+  tech: ['Jetson Orin Nano', 'YOLO11', 'EasyOCR', 'MediaPipe Hands', 'HC-SR04P', 'TTS'],
   photos: {
     worn: { src: 'images/smartglass-worn.jpg', alt: '스마트글래스 시제품을 착용한 모습', caption: '시제품 착용' },
     hardware: {
@@ -186,17 +217,20 @@ export const redesign = {
       fps: '2–3',
       lit: 2.5, // 1초 동안 처리한 프레임 시각화 (2–3 FPS)
       input: [{ name: 'Camera' }] as PipelineNode[],
-      selector: { name: 'Hand Tracking', note: '사용자가 먼저 대상을 가리킴', tone: 'warn' } as PipelineNode,
-      modules: [{ name: 'Object Detection' }, { name: 'OCR' }] as PipelineNode[],
-      group: { label: '모두 동시 실행', note: 'CPU / GPU 병목', tone: 'warn' as Tone },
-      output: [{ name: 'Feedback' }] as PipelineNode[],
+      selector: undefined as PipelineNode | undefined,
+      modules: [
+        { name: 'Hand Tracking', note: 'CPU · 병목', tone: 'warn' },
+        { name: 'Object Detection', note: 'GPU' },
+      ] as PipelineNode[],
+      group: { label: '손 추적 + 객체 탐지 동시 구동', note: 'CPU–GPU 파이프라인 병목', tone: 'warn' as Tone },
+      output: [{ name: 'OCR' }, { name: 'Feedback' }] as PipelineNode[],
     },
     {
       tab: '재설계',
       fps: '15+',
       lit: 15,
       input: [{ name: 'Camera' }, { name: 'Distance Sensor' }] as PipelineNode[],
-      selector: { name: '현재 단계', note: '버스 → 승차문 → … → 하차벨', tone: 'blue' } as PipelineNode,
+      selector: { name: '현재 단계', note: '버스 → 승차문 → … → 하차벨', tone: 'blue' } as PipelineNode | undefined,
       modules: [
         { name: 'Object Detection', note: '단계별 필요한 class만' },
         { name: 'OCR', note: '호출 주기 조정' },
@@ -213,12 +247,12 @@ export const redesign = {
       label: 'Initial Design',
       tone: 'warn' as Tone,
       title: '손으로 가리킨 대상을 인식하는 구조',
-      text: '처음에는 손 위치를 추적해 사용자가 가리킨 대상을 인식하는 구조를 고려했습니다.',
+      text: '처음에는 손가락으로 가리킨 영역을 읽어주는 독서 보조 스마트글래스를 참고해, 손 추적으로 사용자가 가리킨 대상을 인식하는 구조를 구현했습니다.',
       listLabel: '실제 시스템에서 생긴 문제',
       list: [
-        '여러 기능 동시 실행 → 처리 속도 저하',
-        'CPU / GPU 병목',
-        '시각장애인이 먼저 목표를 가리켜야 하는 사용성 문제',
+        '손 추적(CPU)과 객체 탐지(GPU)를 함께 구동 → 2–3 FPS',
+        '손 추적이 CPU–GPU 파이프라인의 병목',
+        '보이지 않는 목표물을 먼저 가리켜야 하는 사용성 문제',
       ],
     },
     {
@@ -226,7 +260,7 @@ export const redesign = {
       label: 'Redesign',
       tone: 'blue' as Tone,
       title: '현재 상황에서 *꼭 필요한 정보만* 처리하자',
-      text: '사용자가 지금 어느 단계에 있는지에 따라, 그 단계에 필요한 것만 처리하도록 구조를 바꿨습니다.',
+      text: '손 추적을 빼고 객체 탐지 · 거리 센싱 · 진동 피드백 중심으로 다시 설계해, 사용자가 지금 있는 단계에 필요한 것만 처리하도록 했습니다.',
       listLabel: '바꾼 것',
       list: [
         '단계별 필요한 객체만 탐지',
@@ -254,8 +288,8 @@ export const neus = {
   status: '진행 중',
   title: 'Current Project — *NEUS*',
   intro:
-    '최근에는 오랜 기간 함께해온 팀원들과 NEUS 프로젝트를 진행하며, NLP와 LLM을 활용한 서비스 개발 경험도 넓히고 있습니다.',
-  team: ['고교 시절부터 알고 지낸 팀원들', '자발적인 팀 프로젝트', '장기 협업'],
+    '같은 사건을 다룬 여러 언론사의 보도를 모아 비교하고, 사실과 주장을 나눠 출처가 남는 중립 기사로 재구성하는 뉴스 서비스입니다.',
+  tagline: '같은 사건, 다른 보도 · 사실과 주장을 나눠 봅니다',
   shift: {
     beforeLabel: '지금까지',
     before: ['Object Detection', 'Edge AI', 'Semantic Segmentation', 'Real-time AI System'],
@@ -263,16 +297,37 @@ export const neus = {
     nowLabel: 'NEUS',
     now: 'NLP / LLM',
   },
-  // TODO(NEUS.md): 해결하려는 문제 · 핵심 기능 · 사용 기술을 detail에 채우면 화면에 한 줄씩 추가된다.
   flow: [
-    { label: 'Problem', text: '풀어야 할 문제를 정의하고', detail: undefined as string | undefined },
-    { label: 'NLP / LLM', text: '문제에 맞는 기술을 선택해', detail: undefined as string | undefined },
-    { label: 'Product', text: '실제 서비스로 구현한다', detail: undefined as string | undefined },
+    {
+      label: 'Problem',
+      text: '같은 사건도 매체마다 다르게 전한다',
+      detail: '무엇이 공통 사실이고 무엇이 주장 · 평가인지 구분하기 어렵다',
+    },
+    {
+      label: 'NLP / LLM',
+      text: '원문 수집 → 표현 판정 → 중립 재작성',
+      detail: '원문 문장 추출형 생성 + 규칙 기반 검증, 문장마다 근거 기사를 표시',
+    },
+    {
+      label: 'Product',
+      text: '사건별 언론사 비교 · 중립 기사',
+      detail: '공통 사실 · 표현이 갈리는 지점 · 원문 대조를 한 화면에',
+    },
   ],
-  // TODO(NEUS.md): 주요 사용자 · 내가 맡은 역할 · 현재 구현 단계 — 확정되면 [label, value] 형태로 추가
-  facts: [] as [string, string][],
-  // TODO: NEUS logo/screenshot을 public/images/에 넣고 경로를 적으면 표시된다.
-  image: undefined as string | undefined,
+  screens: [
+    {
+      src: 'images/neus-compare.jpg',
+      alt: 'NEUS 언론사별 비교 화면: 분석 기사 19건, 언론사 18곳, 공통 사실 22개, 원문 대조 통과',
+      caption: '언론사별 비교',
+    },
+    { src: 'images/neus-about.jpg', alt: 'NEUS 소개 화면: 같은 사건, 다른 보도', caption: 'NEUS란?' },
+    {
+      src: 'images/neus-article.jpg',
+      alt: 'NEUS 중립 기사 화면: 세 줄 요약과 문장별 보도 언론사 수',
+      caption: '중립 기사',
+    },
+  ],
+  url: 'dev.neus.day',
   message:
     '특정 AI 분야에 한정되지 않고, *문제를 정의하고 필요한 기술을 선택해 실제 제품으로 구현하는 경험*을 넓히고 있습니다.',
 }

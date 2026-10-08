@@ -13,7 +13,6 @@ const corners = [
 ]
 
 export function About() {
-  const hobby = profile.hobbyPhoto
   return (
     <Chapter id="about" tone="surface">
       <div className="grid gap-x-16 gap-y-12 lg:grid-cols-12">
@@ -51,35 +50,41 @@ export function About() {
             </p>
           </Reveal>
 
-          <div className="mt-[clamp(2rem,6vh,3.5rem)] grid items-end gap-x-10 gap-y-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-            <dl className="border-t border-line-strong">
-              {profile.facts.map((f, i) => (
-                <Reveal
-                  key={f.label}
-                  delay={i * 0.06}
-                  y={12}
-                  className="grid grid-cols-[5.5rem_1fr] items-baseline gap-x-6 border-b border-line py-[clamp(0.85rem,2vh,1.25rem)] sm:grid-cols-[7rem_1fr]"
-                >
-                  <dt className="text-note font-medium tracking-[0.02em] text-muted">{f.label}</dt>
-                  <dd>
-                    <span className="text-lead font-semibold text-ink">{f.value}</span>
-                    {f.note && <span className="mt-0.5 block text-body text-muted">{f.note}</span>}
-                  </dd>
-                </Reveal>
-              ))}
-            </dl>
-            <Reveal delay={0.35}>
-              <figure className="group overflow-hidden rounded-[4px] border border-line">
-                <img
-                  src={asset(hobby.src)}
-                  alt={hobby.alt}
-                  className="aspect-[4/3] w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                />
-                <figcaption className="border-t border-line bg-canvas px-3 py-2 text-note font-medium text-muted">
-                  {hobby.caption}
-                </figcaption>
-              </figure>
-            </Reveal>
+          <dl className="mt-[clamp(2rem,6vh,3.5rem)] border-t border-line-strong">
+            {profile.facts.map((f, i) => (
+              <Reveal
+                key={f.label}
+                delay={i * 0.06}
+                y={12}
+                className="grid grid-cols-[5.5rem_1fr] items-baseline gap-x-6 border-b border-line py-[clamp(0.85rem,2vh,1.25rem)] sm:grid-cols-[7rem_1fr]"
+              >
+                <dt className="text-note font-medium tracking-[0.02em] text-muted">{f.label}</dt>
+                <dd>
+                  <span className="text-lead font-semibold text-ink">{f.value}</span>
+                  {f.note && <span className="mt-0.5 block text-body text-muted">{f.note}</span>}
+                </dd>
+              </Reveal>
+            ))}
+          </dl>
+
+          {/* 취미 사진: 같은 크기로 나란히 */}
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
+            {profile.hobbyPhotos.map((h, i) => (
+              <Reveal key={h.src} delay={0.15 + i * 0.12}>
+                <figure className="group overflow-hidden rounded-[4px] border border-line bg-surface">
+                  <div className="overflow-hidden">
+                    <img
+                      src={asset(h.src)}
+                      alt={h.alt}
+                      className="aspect-[4/3] w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                    />
+                  </div>
+                  <figcaption className="border-t border-line bg-canvas px-3 py-2 text-note font-medium text-muted">
+                    취미 · {h.caption}
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
           </div>
         </div>
       </div>

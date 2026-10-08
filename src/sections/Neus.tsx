@@ -1,9 +1,11 @@
 import { ArrowDown, ArrowRight } from 'lucide-react'
+import { motion, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { useRef } from 'react'
 import { Chapter } from '../components/Chapter'
 import { Reveal } from '../components/motion'
-import { Em, Figure, Label, Tag, Title } from '../components/ui'
+import { Em, Label, Tag, Title } from '../components/ui'
 import { neus as d } from '../data/projects'
-import { pad } from '../lib/util'
+import { asset, pad } from '../lib/util'
 
 export function Neus() {
   return (
@@ -20,11 +22,9 @@ export function Neus() {
             </p>
             <Title text={d.title} className="mt-3" />
             <p className="mt-[clamp(1rem,3vh,1.75rem)] max-w-[34em] text-lead text-ink-soft">{d.intro}</p>
-            <ul className="mt-5 flex flex-wrap gap-2">
-              {d.team.map((t) => (
-                <Tag key={t}>{t}</Tag>
-              ))}
-            </ul>
+            <p className="mt-4 inline-block border-l-2 border-ink pl-3 text-body font-medium text-ink-soft">
+              “{d.tagline}”
+            </p>
           </Reveal>
 
           {/* Vision 중심 경험 → NLP / LLM으로 확장 */}
@@ -49,35 +49,24 @@ export function Neus() {
           </Reveal>
         </div>
 
-        <div className="lg:col-span-5">
-          {d.image && <Figure src={d.image} alt="NEUS" className="mb-8" />}
-          <ol>
-            {d.flow.map((f, i) => (
-              <Reveal as="li" key={f.label} delay={0.1 + i * 0.12} y={16}>
-                {i > 0 && <ArrowDown aria-hidden className="my-2 ml-1 size-4 text-faint" />}
-                <div className="grid grid-cols-[2.5rem_1fr] items-baseline border-t border-line pt-3">
-                  <span className="font-mono text-note text-blue-deep">{pad(i + 1)}</span>
-                  <div>
-                    <p className="text-heading font-semibold tracking-[-0.02em] text-ink">{f.label}</p>
-                    <p className="text-body text-muted">{f.text}</p>
-                    {f.detail && <p className="mt-1 text-body text-ink-soft">{f.detail}</p>}
-                  </div>
+        <ol className="lg:col-span-5">
+          {d.flow.map((f, i) => (
+            <Reveal as="li" key={f.label} delay={0.1 + i * 0.12} y={16}>
+              {i > 0 && <ArrowDown aria-hidden className="my-2 ml-1 size-4 text-faint" />}
+              <div className="grid grid-cols-[2.5rem_1fr] items-baseline border-t border-line pt-3">
+                <span className="font-mono text-note text-blue-deep">{pad(i + 1)}</span>
+                <div>
+                  <p className="text-heading font-semibold tracking-[-0.02em] text-ink">{f.label}</p>
+                  <p className="mt-0.5 text-body font-medium text-ink">{f.text}</p>
+                  <p className="mt-0.5 text-body text-muted">{f.detail}</p>
                 </div>
-              </Reveal>
-            ))}
-          </ol>
-          {d.facts.length > 0 && (
-            <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-body">
-              {d.facts.map(([k, v]) => (
-                <div key={k} className="contents">
-                  <dt className="text-note font-medium text-muted">{k}</dt>
-                  <dd className="text-ink-soft">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-        </div>
+              </div>
+            </Reveal>
+          ))}
+        </ol>
       </div>
+
+      <Screens />
 
       <Reveal className="mt-[clamp(3rem,9vh,5rem)]">
         <p className="max-w-[40em] border-l-2 border-sky pl-6 text-lead font-semibold tracking-[-0.01em] text-ink">
@@ -85,5 +74,60 @@ export function Neus() {
         </p>
       </Reveal>
     </Chapter>
+  )
+}
+
+/** 실제 서비스 화면 3장: 스크롤해 들어오면 가운데로 겹쳐 있던 화면이 양옆으로 펼쳐진다 (md 이상) */
+function Screens() {
+  const ref = useRef<HTMLDivElement>(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'center 60%'] })
+  const p = useSpring(scrollYProgress, { stiffness: 110, damping: 28, restDelta: 0.001 })
+  const k = reduce ? 0 : 1
+  // 왼쪽 · 오른쪽 화면은 가운데 뒤에 겹쳐 있다가 제자리로 (가운데는 고정)
+  const leftX = useTransform(p, [0, 1], [`${55 * k}%`, '0%'])
+  const rightX = useTransform(p, [0, 1], [`${-55 * k}%`, '0%'])
+  const leftR = useTransform(p, [0, 1], [`${7 * k}deg`, '-2deg'])
+  const rightR = useTransform(p, [0, 1], [`${-7 * k}deg`, '2deg'])
+  const fan: (Record<string, MotionValue<string> | string> | undefined)[] = [
+    { '--fan-x': leftX, '--fan-r': leftR },
+    undefined,
+    { '--fan-x': rightX, '--fan-r': rightR },
+  ]
+  const order = [1, 0, 2] // 가운데 = 언론사별 비교 화면
+  return (
+    <div ref={ref} className="mt-[clamp(3.5rem,10vh,6rem)]">
+      <Label>실제 화면 · {d.url}</Label>
+      <div className="mt-5 grid gap-6 md:grid-cols-3 md:items-center md:gap-4">
+        {order.map((si, col) => {
+          const s = d.screens[si]
+          const center = col === 1
+          return (
+            <motion.figure
+              key={s.src}
+              style={fan[col]}
+              className={center ? 'relative z-10 md:scale-[1.08]' : 'md:translate-x-(--fan-x) md:rotate-(--fan-r)'}
+            >
+              <BrowserFrame src={s.src} alt={s.alt} url={d.url} />
+              <figcaption className="mt-2 text-center text-note text-muted">{s.caption}</figcaption>
+            </motion.figure>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function BrowserFrame({ src, alt, url }: { src: string; alt: string; url: string }) {
+  return (
+    <div className="overflow-hidden rounded-[10px] border border-line-strong bg-surface shadow-[0_2px_4px_rgba(23,35,49,0.05),0_24px_48px_-24px_rgba(23,35,49,0.35)]">
+      <div className="flex items-center gap-1.5 border-b border-line bg-canvas px-3 py-2">
+        {[0, 1, 2].map((i) => (
+          <span key={i} aria-hidden className="size-2 rounded-full bg-line-strong" />
+        ))}
+        <span className="ml-2 truncate rounded bg-surface px-2 py-0.5 font-mono text-[10px] text-muted">{url}</span>
+      </div>
+      <img src={asset(src)} alt={alt} loading="lazy" className="block aspect-[16/10] w-full object-cover object-top" />
+    </div>
   )
 }

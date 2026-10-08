@@ -14,15 +14,14 @@ const list = [
     label: 'Smart Glass',
     kicker: 'Main Project',
     toc: '시각장애인 버스 승하차 보조 · 2–3 → 15+ FPS',
-    main: true,
   },
-  { id: 'neus', label: 'NEUS', kicker: 'Current Project', toc: '진행 중인 NLP / LLM 프로젝트' },
+  { id: 'neus', label: 'NEUS', kicker: 'Current Project', toc: '사건 단위로 여러 언론 보도를 비교하는 중립 뉴스 서비스' },
   { id: 'next', label: "What's Next", toc: 'From Perception to Robotics' },
 ] as const
 
 export type ChapterId = (typeof list)[number]['id']
 
-export const chapters: readonly { id: ChapterId; label: string; kicker?: string; toc: string; main?: boolean }[] = list
+export const chapters: readonly { id: ChapterId; label: string; kicker?: string; toc: string }[] = list
 
 /** ←/→ 이동 지점: 표지 → 각 챕터 → 마무리 */
 export const stops = ['top', ...list.map((c) => c.id), 'thanks'] as const

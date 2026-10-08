@@ -3,7 +3,7 @@ import { AnimatePresence, animate, motion, useInView, useReducedMotion } from 'm
 import { useEffect, useRef, useState } from 'react'
 import { Chapter } from '../components/Chapter'
 import { Reveal } from '../components/motion'
-import { Em, Label, Title } from '../components/ui'
+import { Em, Label, TechDetail, Title } from '../components/ui'
 import { redesign as r, smartGlass as d, type PipelineNode, type Tone } from '../data/projects'
 import { asset, ease } from '../lib/util'
 
@@ -22,51 +22,109 @@ export function SmartGlass() {
 
 function Overview() {
   return (
-    <div className="grid gap-x-16 gap-y-14 lg:grid-cols-12">
-      <div className="lg:col-span-7">
-        <Reveal>
+    <>
+      <div className="grid gap-x-16 gap-y-6 lg:grid-cols-12 lg:items-end">
+        <Reveal className="lg:col-span-7">
           <Title text={d.title} />
-          <p className="mt-5 text-lead text-ink-soft">{d.goal}</p>
         </Reveal>
-
-        <Reveal className="mt-[clamp(2.5rem,7vh,4rem)]">
-          <Label>{d.usageLabel}</Label>
-          <UsageFlow />
+        <Reveal delay={0.1} className="lg:col-span-5">
+          <p className="text-lead text-ink-soft">{d.goal}</p>
         </Reveal>
+      </div>
 
-        <Reveal className="mt-[clamp(2.5rem,7vh,4rem)]">
-          <Label>{d.systemLabel}</Label>
-          <ol className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] sm:items-stretch">
-            {d.system.map((s, i) => (
-              <li key={s.label} className="contents">
-                {i > 0 && (
-                  <span aria-hidden className="hidden place-items-center text-faint sm:grid">
-                    <ArrowRight className="size-4" />
+      {/* 시스템 개요: ①–③은 팀원 담당(예약 · 통신), ④가 내 담당(스마트글래스) */}
+      <Reveal className="mt-[clamp(2rem,6vh,3.5rem)]">
+        <figure className="mx-auto max-w-[min(100%,calc(78vh*1464/807))] overflow-hidden rounded-[8px] border border-line bg-surface">
+          <img
+            src={asset(d.overview.src)}
+            alt={d.overview.alt}
+            className="block aspect-[1464/807] w-full object-cover"
+          />
+          <figcaption className="grid gap-x-6 gap-y-2 border-t border-line px-5 py-3.5 sm:grid-cols-2 lg:grid-cols-4">
+            {d.overview.parts.map((part) => (
+              <span
+                key={part.no}
+                className={`flex items-center gap-2 text-note ${part.mine ? 'font-semibold text-blue-deep' : 'text-muted'}`}
+              >
+                <span className="font-mono">{part.no}</span>
+                {part.label}
+                {part.mine && (
+                  <span className="rounded-full bg-blue px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-white uppercase">
+                    My Role
                   </span>
                 )}
-                <span className="rounded-[4px] border border-line bg-surface px-3.5 py-3">
-                  <span className="block text-note font-medium text-muted">{s.stage}</span>
-                  <span className="mt-0.5 block text-body leading-snug font-semibold text-ink">{s.label}</span>
-                </span>
-              </li>
+              </span>
             ))}
-          </ol>
-          <div className="mt-3 border-t-2 border-blue pt-3">
-            <p className="text-body text-ink">
-              <span className="mr-3 font-mono text-note tracking-[0.1em] text-blue-deep uppercase">My Role</span>
-              <span className="font-semibold">{d.role}</span>
-            </p>
-            <p className="mt-1 text-note text-muted">{d.roleItems.join(' · ')}</p>
-            <p className="mt-1 text-note text-faint">※ {d.roleNote}</p>
-          </div>
+          </figcaption>
+        </figure>
+      </Reveal>
+
+      {/* 참고했던 기존 보조 기술의 한계 → 그래서 하나의 안내 흐름으로 */}
+      <div className="mt-[clamp(3rem,8vh,4.5rem)] grid gap-x-16 gap-y-6 lg:grid-cols-12 lg:items-start">
+        <Reveal className="lg:col-span-4">
+          <Label>{d.referencesLabel}</Label>
+          <p className="mt-3 text-lead leading-snug font-semibold tracking-[-0.01em] text-ink">
+            <Em text={d.gap} />
+          </p>
         </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+          {d.references.map((r, i) => (
+            <Reveal key={r.name} delay={0.1 + i * 0.12} className="h-full">
+              <div className="h-full rounded-[6px] border border-line bg-surface p-5">
+                <p className="text-body font-semibold text-ink">{r.name}</p>
+                <p className="mt-2 text-body text-muted">
+                  <span className="mr-2 font-medium text-warn">한계</span>
+                  {r.limit}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-[2fr_3fr] items-end gap-3 self-start lg:col-span-5 lg:mt-24">
-        <Photo {...d.photos.hardware} aspect="aspect-[4/3]" delay={0.25} />
-        <Photo {...d.photos.worn} aspect="aspect-[777/1143]" delay={0} />
+      <div className="mt-[clamp(3rem,8vh,4.5rem)] grid gap-x-16 gap-y-14 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <Reveal>
+            <Label>{d.usageLabel}</Label>
+            <UsageFlow />
+          </Reveal>
+
+          <Reveal className="mt-[clamp(2.5rem,7vh,4rem)]">
+            <Label>{d.systemLabel}</Label>
+            <ol className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] sm:items-stretch">
+              {d.system.map((s, i) => (
+                <li key={s.label} className="contents">
+                  {i > 0 && (
+                    <span aria-hidden className="hidden place-items-center text-faint sm:grid">
+                      <ArrowRight className="size-4" />
+                    </span>
+                  )}
+                  <span className="rounded-[4px] border border-line bg-surface px-3.5 py-3">
+                    <span className="block text-note font-medium text-muted">{s.stage}</span>
+                    <span className="mt-0.5 block text-body leading-snug font-semibold text-ink">{s.label}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-3 border-t-2 border-blue pt-3">
+              <p className="text-body text-ink">
+                <span className="mr-3 font-mono text-note tracking-[0.1em] text-blue-deep uppercase">My Role</span>
+                <span className="font-semibold">{d.role}</span>
+              </p>
+              <p className="mt-1 text-note text-muted">{d.roleItems.join(' · ')}</p>
+              <p className="mt-1 text-note text-faint">※ {d.roleNote}</p>
+              <TechDetail items={d.tech} className="mt-3" />
+            </div>
+          </Reveal>
+        </div>
+
+        {/* 같은 크기로 나란히: 하드웨어 클로즈업 · 착용 사진 */}
+        <div className="grid grid-cols-2 gap-3 self-start lg:col-span-5">
+          <Photo {...d.photos.hardware} fit="object-center" delay={0.15} />
+          <Photo {...d.photos.worn} fit="object-top" delay={0} />
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -75,13 +133,13 @@ function Photo({
   src,
   alt,
   caption,
-  aspect,
+  fit,
   delay,
 }: {
   src: string
   alt: string
   caption: string
-  aspect: string
+  fit: string
   delay: number
 }) {
   const reduce = useReducedMotion()
@@ -93,7 +151,7 @@ function Photo({
         variants={{ hidden: { clipPath: 'inset(100% 0% 0% 0%)' }, shown: { clipPath: 'inset(0% 0% 0% 0%)' } }}
         transition={{ duration: 1.1, ease, delay }}
       >
-        <img src={asset(src)} alt={alt} className={`block w-full object-cover ${aspect}`} />
+        <img src={asset(src)} alt={alt} className={`block aspect-[4/5] w-full object-cover ${fit}`} />
       </motion.div>
       <figcaption className="mt-2 text-note text-muted">{caption}</figcaption>
     </motion.figure>
@@ -304,14 +362,24 @@ const box: Record<Tone, string> = {
 }
 
 function Pipeline({ state }: { state: State }) {
-  const { group } = state
+  const { group, selector } = state
   const warn = group.tone === 'warn'
   return (
-    <div className="mt-6 grid items-center gap-2 sm:grid-cols-[minmax(0,0.85fr)_auto_minmax(0,1fr)_auto_minmax(0,1.45fr)_auto_minmax(0,1fr)]">
+    <div
+      className={`mt-6 grid items-center gap-2 ${
+        selector
+          ? 'sm:grid-cols-[minmax(0,0.85fr)_auto_minmax(0,1fr)_auto_minmax(0,1.45fr)_auto_minmax(0,1fr)]'
+          : 'sm:grid-cols-[minmax(0,0.85fr)_auto_minmax(0,1.6fr)_auto_minmax(0,1fr)]'
+      }`}
+    >
       <Stack nodes={state.input} />
       <Arrow />
-      <Node node={state.selector} />
-      <Arrow />
+      {selector && (
+        <>
+          <Node node={selector} />
+          <Arrow />
+        </>
+      )}
       <div className={`rounded-[4px] border border-dashed p-2 ${warn ? 'border-warn/60' : 'border-blue/60'}`}>
         <p className={`px-1 pb-1.5 text-note font-medium ${warn ? 'text-warn' : 'text-blue-deep'}`}>{group.label}</p>
         <Stack nodes={state.modules} />

@@ -87,11 +87,6 @@ export function Intro() {
                   <span>
                     <span className="flex items-center gap-2 text-node font-semibold tracking-[-0.02em] text-ink">
                       {c.label}
-                      {c.main && (
-                        <span className="rounded-full bg-blue px-2 py-0.5 font-mono text-[10px] font-semibold tracking-[0.1em] text-white uppercase">
-                          Main
-                        </span>
-                      )}
                     </span>
                     <span className="mt-0.5 block text-note text-muted">{c.toc}</span>
                   </span>
