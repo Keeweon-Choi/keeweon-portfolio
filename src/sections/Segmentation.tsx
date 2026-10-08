@@ -48,7 +48,7 @@ export function Segmentation() {
                   </Tag>
                 ))}
               </ul>
-              <TechDetail items={d.models} label="비교한 구조" className="mt-3" />
+              <TechDetail items={d.models} label="비교한 아키텍처" className="mt-3" />
             </Block>
           </Reveal>
           <Reveal delay={0.15}>

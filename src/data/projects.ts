@@ -171,10 +171,10 @@ export const segmentation = {
   credit: 'Video: Cityscapes 주행 장면 · PIDNet 실시간 Semantic Segmentation 데모 (github.com/XuJiacong/PIDNet, MIT)',
   problem:
     '실제 시스템에서는 가장 정확한 모델이 항상 최선은 아니었습니다. 속도, 메모리, 하드웨어 제약을 함께 고려해야 했습니다.',
-  did: '여러 경량 Semantic Segmentation 구조를 동일 조건에서 구현 · 학습하고 비교했습니다.',
+  did: '실시간 Semantic Segmentation 아키텍처들을 동일 조건에서 구현 · 학습하고 비교했습니다.',
   criteria: ['Accuracy', 'Speed', 'Resource usage'],
   models: ['BiSeNetV2', 'Fast-SCNN', 'STDC', 'PP-LiteSeg', 'DeepLabV3+'],
-  result: '정확도와 처리 효율 사이의 균형이 좋은 모델을 개발했습니다.',
+  result: '정확도와 처리 효율의 균형을 맞춰, 실제 적용 환경에 맞는 모델을 개발했습니다.',
   lesson: '*실제 사용 환경과 요구 조건*을 고려해서 개발해야 한다.',
   robotics: '로봇이 주변을 이해할 때도, 객체를 찾는 것뿐 아니라 공간과 영역을 세밀하게 인식하는 것이 중요합니다.',
 }
