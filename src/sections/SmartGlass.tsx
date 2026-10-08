@@ -146,16 +146,26 @@ function Overview() {
       </div>
 
       {/* 실제로 어떻게 안내하는지: 좌우 진동 모터를 단 3D 모형 + 카메라 화면 */}
-      {/* 실제 사용 영상: 단계별 인식이 현장에서 그대로 돈다 */}
-      <Reveal className="mt-[clamp(3rem,8vh,4.5rem)]">
-        <Label>{d.demo.label}</Label>
-        <figure className="mx-auto mt-4 max-w-[min(100%,calc(78vh*1280/546))]">
-          <div className="overflow-hidden rounded-[8px] border border-line bg-ink">
-            <Clip src={d.demo.src} poster={d.demo.poster} alt={d.demo.alt} aspect="aspect-[1280/546]" fit="object-contain" controls />
-          </div>
-          <figcaption className="mt-2 text-note text-muted">{d.demo.caption}</figcaption>
-        </figure>
-      </Reveal>
+      {/* 실제 사용 영상: 단계마다 무음 반복 (움짤처럼) */}
+      <div className="mt-[clamp(3rem,8vh,4.5rem)]">
+        <Reveal>
+          <Label>{d.demo.label}</Label>
+        </Reveal>
+        <ol className="mt-4 grid gap-x-5 gap-y-6 md:grid-cols-2">
+          {d.demo.clips.map((c, i) => (
+            <Reveal as="li" key={c.src} delay={(i % 2) * 0.1}>
+              <div className="overflow-hidden rounded-[8px] border border-line bg-ink">
+                <Clip src={c.src} poster={c.poster} alt={c.alt} aspect="aspect-[960/410]" fit="object-contain" />
+              </div>
+              <p className="mt-2 flex items-baseline gap-2 text-body font-semibold text-ink">
+                <span className="text-blue-deep">{c.no}</span>
+                {c.title}
+              </p>
+            </Reveal>
+          ))}
+        </ol>
+        <p className="mt-3 text-note text-muted">{d.demo.caption}</p>
+      </div>
 
       <GlassGuide />
     </>

@@ -238,12 +238,16 @@ export const smartGlass = {
   tech: ['Jetson Orin Nano', 'YOLO11', 'EasyOCR', 'MediaPipe Hands', 'HC-SR04P', 'TTS'],
   awards: ['한국ITS학회 2025 추계학술대회 학부논문경진대회 우수상', '탄소중립 INNOVATION ACADEMY 대상'],
   // 종합설계 최종 발표 데모의 실사용 부분 (왼쪽 착용 모습 · 오른쪽 안경 카메라 화면, 영상 속 인물 = 본인)
+  // 단계별 무음 반복 영상 (원본 assets/demo/capstone-demo.mp4에서 단계마다 잘라냄)
   demo: {
     label: '실제 사용 영상',
-    src: 'media/glass-demo.mp4',
-    poster: 'media/glass-demo.jpg',
-    alt: '스마트글래스를 쓰고 버스를 타는 실제 시연: 버스 번호, 승차문과 카드단말기, 빈 좌석, 하차벨을 차례로 인식하고 초음파 거리를 함께 표시하는 카메라 화면',
-    caption: '안경 카메라 화면과 착용 모습 — 버스 번호 → 승차문 · 카드단말기 → 빈 좌석 → 하차벨 (STEP = 현재 단계, ULTRA = 초음파 거리 · 소리는 영상의 스피커 버튼으로)',
+    caption: '안경 카메라 화면과 착용 모습 · STEP = 현재 단계, ULTRA = 초음파 거리',
+    clips: [
+      { no: '①', title: '버스 번호 인식', src: 'media/glass-step-1.mp4', poster: 'media/glass-step-1.jpg', alt: '밤 정류장에서 다가오는 버스를 탐지하고 거리를 표시하는 카메라 화면' },
+      { no: '②③', title: '승차문 · 카드단말기 인식', src: 'media/glass-step-2.mp4', poster: 'media/glass-step-2.jpg', alt: '버스 앞문과 카드단말기를 차례로 탐지하고 초음파 거리를 표시하는 화면과 착용 모습' },
+      { no: '④', title: '빈 좌석 인식', src: 'media/glass-step-3.mp4', poster: 'media/glass-step-3.jpg', alt: '버스 안 빈 좌석을 탐지하는 카메라 화면과 통로를 걷는 착용 모습' },
+      { no: '⑤', title: '하차벨 인식', src: 'media/glass-step-4.mp4', poster: 'media/glass-step-4.jpg', alt: '기둥의 하차벨을 탐지하고 손으로 누르는 카메라 화면과 앉아 있는 착용 모습' },
+    ],
   },
   photos: {
     worn: { src: 'images/smartglass-worn.jpg', alt: '스마트글래스 시제품을 착용한 모습', caption: '시제품 착용' },
