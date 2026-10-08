@@ -26,6 +26,7 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
+  SphereGeometry,
   SRGBColorSpace,
   TextureLoader,
   TorusGeometry,
@@ -89,6 +90,17 @@ const rings = (radius: number) =>
         new MeshBasicMaterial({ color: C.blue, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }),
       ),
   )
+
+/** 진동: 모터에서 바깥쪽(±x)으로 퍼져 나가는 호 3개 — 스피커 소리처럼 옆으로 웅웅 울린다 (뒤에서 보면 ")))") */
+const arcs = (side: number) =>
+  Array.from({ length: 3 }, () => {
+    const m = new Mesh(
+      new TorusGeometry(0.24, 0.022, 8, 32, 1.5),
+      new MeshBasicMaterial({ color: C.blue, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }),
+    )
+    m.rotation.z = side > 0 ? -0.75 : Math.PI - 0.75 // 호의 가운데가 바깥쪽을 향하게
+    return m
+  })
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k
 
@@ -206,11 +218,8 @@ export async function mount(
     const mesh = new Mesh(new CapsuleGeometry(0.11, 0.3, 6, 20), mat)
     mesh.rotation.x = Math.PI / 2
     mesh.position.set(s * motorAt.x, motorAt.y, motorAt.z)
-    const ripples = rings(0.2)
-    for (const r of ripples) {
-      r.rotation.x = Math.PI / 2 // 관자놀이 둘레로 퍼지는 물결
-      r.position.copy(mesh.position)
-    }
+    const ripples = arcs(s)
+    for (const r of ripples) r.position.copy(mesh.position)
     model.add(rim, lens, hinge, temple, tip, mesh, ...ripples)
     motors.push({ mesh, mat, ripples, level: 0, phase: 0 })
   }
@@ -301,6 +310,27 @@ export async function mount(
     )
   head.add(band, line(edge, 0.7), line(rays, 0.35))
 
+  /* ── 레이저 포인터: 카메라(빨강) · 거리 센서(파랑)가 정면 어디를 가리키는지. 머리와 함께 돈다 ── */
+  const laser = (from: Vector3, color: number) => {
+    const end = -(R - 0.15) // 벽 바로 앞
+    const len = from.z - end
+    const mat = (opacity: number) =>
+      new MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, toneMapped: false })
+    const core = new Mesh(new CylinderGeometry(0.024, 0.024, len, 8, 1, true), mat(0.9))
+    const glow = new Mesh(new CylinderGeometry(0.085, 0.085, len, 12, 1, true), mat(0.16))
+    for (const m of [core, glow]) {
+      m.rotation.x = Math.PI / 2
+      m.position.set(from.x, from.y, (from.z + end) / 2)
+    }
+    const dot = new Mesh(new SphereGeometry(0.13, 16, 12), mat(1))
+    const halo = new Mesh(new SphereGeometry(0.34, 16, 12), mat(0.22))
+    for (const m of [dot, halo]) m.position.set(from.x, from.y, end)
+    head.add(glow, core, halo, dot)
+    return { beam: [core, glow].map((m) => m.material as MeshBasicMaterial), halo }
+  }
+  const camLaser = laser(new Vector3(0, -0.14, -0.26 + model.position.z), 0xf0584a) // 카메라 렌즈 앞
+  const sensorLaser = laser(new Vector3(0, 0.66, -0.47 + model.position.z), C.blue) // 초음파 센서 앞
+
   // HTML 라벨이 붙는 3D 지점 (모형 기준)
   const at: Record<Pin, Vector3> = {
     camera: new Vector3(0, -0.32, -0.16),
@@ -354,14 +384,18 @@ export async function mount(
       m.level = p.still ? target : ease(m.level, target, dt)
       // 세질수록 물결이 크고 빠르다
       m.phase = (m.phase + dt / lerp(1.1, 0.5, m.level)) % 1
-      const j = p.still ? 0 : 0.02 * m.level // 진동: 아주 작게 떨린다
+      const j = p.still ? 0 : 0.035 * m.level // 진동: 모터가 웅웅 떤다
       m.mesh.position.set(s * motorAt.x + Math.sin(p.time * 83) * j, motorAt.y + Math.sin(p.time * 71 + 1) * j, motorAt.z)
       m.mat.emissiveIntensity = 0.7 * m.level
       m.ripples.forEach((r, k) =>
-        ring(r, p.still ? (k + 0.35) / 3 : (m.phase + k / 3) % 1, Math.min(1, m.level * 1.6) * 0.85, lerp(1.4, 3.2, m.level)),
+        ring(r, p.still ? (k + 0.35) / 3 : (m.phase + k / 3) % 1, Math.min(1, m.level * 1.6) * 0.9, lerp(1.6, 3.6, m.level)),
       )
     })
     sensorLevel = p.still ? p.sensor : ease(sensorLevel, p.sensor, dt)
+    // 레이저 점이 살짝 숨 쉬듯, 거리 센서 레이저는 거리를 잴 때(음성 안내) 더 밝게
+    camLaser.halo.scale.setScalar(p.still ? 1 : 1 + 0.18 * Math.sin(p.time * 7))
+    sensorLaser.halo.scale.setScalar(1 + 0.5 * sensorLevel)
+    sensorLaser.beam[0].opacity = 0.45 + 0.5 * sensorLevel
     sensorPhase = (sensorPhase + dt / 1.3) % 1
     pulses.forEach((r, k) => {
       const q = p.still ? (k + 0.35) / 3 : (sensorPhase + k / 3) % 1

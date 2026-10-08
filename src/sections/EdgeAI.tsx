@@ -6,7 +6,7 @@ import { useLive, useLoop } from '../components/fx/loop'
 import { CountUp, Reveal, Words } from '../components/motion'
 import { Label, TechDetail, Title } from '../components/ui'
 import { edgeAI as d } from '../data/projects'
-import { pad } from '../lib/util'
+import { asset, pad } from '../lib/util'
 
 const LAP = 3.5 // 레이스에서 원본이 한 바퀴 도는 시간(초). 같은 시간에 최적화 모델은 배수만큼 돈다
 
@@ -58,6 +58,7 @@ export function EdgeAI() {
                 <ModelResult key={m.name} model={m} index={i} />
               ))}
             </div>
+            <p className="mt-5 font-mono text-[11px] text-faint">{d.result.credit}</p>
           </div>
         </Reveal>
       </div>
@@ -96,6 +97,7 @@ function ModelResult({ model: m, index }: { model: Model; index: number }) {
     <div ref={ref} className={index ? 'sm:pl-10' : ''}>
       <p className="text-heading leading-tight font-semibold tracking-[-0.02em] text-ink">{m.name}</p>
       <p className="mt-0.5 font-mono text-note text-muted">{m.method}</p>
+      <Demo demo={m.demo} />
       <div className="mt-5 grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-[clamp(0.75rem,2.5vh,1.25rem)]">
         {rows.map((r, i) => {
           const fast = r.value > 1
@@ -127,6 +129,38 @@ function ModelResult({ model: m, index }: { model: Model; index: number }) {
         <Race start={inView} rows={rows} />
       </div>
     </div>
+  )
+}
+
+/** 모델이 원래 하는 일: 분류는 사진 전체에 라벨 하나, 탐지는 물체마다 박스 */
+function Demo({ demo }: { demo: Model['demo'] }) {
+  return (
+    <figure className="mt-4">
+      <div className="relative overflow-hidden rounded-[4px] bg-line">
+        <img src={asset(demo.src)} alt={demo.alt} loading="lazy" className="block aspect-[16/10] w-full object-cover" />
+        {demo.tag && (
+          <>
+            <span aria-hidden className="absolute inset-0 rounded-[4px] ring-2 ring-sky ring-inset" />
+            <span className="absolute bottom-2 left-2 rounded-[3px] bg-sky px-1.5 py-0.5 font-mono text-[11px] leading-none text-ink">
+              → {demo.tag}
+            </span>
+          </>
+        )}
+        {demo.boxes.map((b) => (
+          <span
+            key={b.label}
+            aria-hidden
+            className="absolute border-2 border-sky"
+            style={{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` }}
+          >
+            <span className="absolute top-0 left-0 bg-sky px-1.5 py-0.5 font-mono text-[11px] leading-none text-ink">
+              {b.label}
+            </span>
+          </span>
+        ))}
+      </div>
+      <figcaption className="mt-1.5 text-note text-muted">{demo.caption}</figcaption>
+    </figure>
   )
 }
 

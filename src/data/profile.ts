@@ -5,7 +5,7 @@ export const profile = {
   nameKo: '최기원',
   nameEn: 'Keeweon Choi',
   affiliation: '인하대학교 컴퓨터공학과',
-  statement: 'AI를 활용해 사람들이 *현실에서 겪는 문제*들을 해결하고자 합니다.',
+  statement: '*현실에서 동작하는 AI*로, 사람들이 겪는 문제를 해결하고 싶습니다.',
   keywords: ['Computer Vision', 'Edge AI', 'Real-world AI Systems'],
   intro:
     '학부 과정에서 Computer Vision과 Edge AI를 중심으로 공부했고, 모델 자체의 성능뿐 아니라 실제 하드웨어와 시스템에서 제대로 동작시키는 과정에 관심을 가져왔습니다.',

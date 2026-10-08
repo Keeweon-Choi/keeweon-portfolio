@@ -105,10 +105,39 @@ export const edgeAI = {
     caption: 'Result — 처리 속도 (각 모델의 원본 = 1×)',
     // raw 수치 비공개: 모델마다 자기 원본 대비 몇 배인지만. 두 모델끼리는 비교하지 않는다
     baseline: '원본',
+    // demo: 모델이 원래 무엇을 하는지 (고양이 · 개 사진). boxes = 사진 안 위치(%)
     models: [
-      { name: 'ResNet101', method: 'TensorRT · INT8 Quantization', label: 'INT8', value: 3 },
-      { name: 'YOLOX-nano', method: 'TensorRT · FP16 변환', label: 'FP16', value: 5 },
+      {
+        name: 'ResNet101',
+        method: 'TensorRT · INT8 Quantization',
+        label: 'INT8',
+        value: 3,
+        demo: {
+          src: 'images/catdog-classify.jpg',
+          alt: '고양이 사진 한 장 전체에 cat이라는 라벨 하나를 붙이는 이미지 분류 예시',
+          caption: '이미지 분류 — 사진 전체에 라벨 하나',
+          tag: 'cat',
+          boxes: [] as { label: string; x: number; y: number; w: number; h: number }[],
+        },
+      },
+      {
+        name: 'YOLOX-nano',
+        method: 'TensorRT · FP16 변환',
+        label: 'FP16',
+        value: 5,
+        demo: {
+          src: 'images/catdog-detect.jpg',
+          alt: '고양이와 개가 함께 있는 사진에서 각각의 위치를 박스로 찾는 객체 탐지 예시',
+          caption: '객체 탐지 — 물체마다 위치(박스)와 라벨',
+          tag: '',
+          boxes: [
+            { label: 'cat', x: 3.1, y: 36.7, w: 52.1, h: 58.3 },
+            { label: 'dog', x: 39.6, y: 2.5, w: 57.8, h: 97.5 },
+          ],
+        },
+      },
     ],
+    credit: '사진: Arantz · CC BY-SA 3.0 (Wikimedia Commons)',
   },
   lesson: "최적화에서는 *'더 빠른가'*뿐 아니라 *'판단 성능이 유지되는가'*를 함께 봐야 한다.",
   robotics: '로봇이나 임베디드 장치는 연산 자원이 제한되어, 알고리즘뿐 아니라 실제 하드웨어에서의 효율도 중요합니다.',

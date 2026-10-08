@@ -83,17 +83,14 @@ function Overview() {
         </figure>
       </Reveal>
 
-      {/* 참고했던 기존 보조 기술의 한계 → 그래서 하나의 안내 흐름으로 */}
-      <div className="mt-[clamp(3rem,8vh,4.5rem)] grid gap-x-16 gap-y-6 lg:grid-cols-12 lg:items-start">
-        <Reveal className="lg:col-span-4">
+      {/* 참고했던 기존 보조 기술의 한계 (영상 + 설명) → 오른쪽에 "그래서 하나의 안내 흐름으로" */}
+      <div className="mt-[clamp(3rem,8vh,4.5rem)]">
+        <Reveal>
           <Label>{d.referencesLabel}</Label>
-          <p className="mt-3 text-lead leading-snug font-semibold tracking-[-0.01em] text-ink">
-            <Em text={d.gap} />
-          </p>
         </Reveal>
-        <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:items-center lg:gap-x-6">
           {d.references.map((r, i) => (
-            <Reveal key={r.name} delay={0.1 + i * 0.12} className="h-full">
+            <Reveal key={r.name} delay={0.1 + i * 0.12} className="h-full lg:col-span-4">
               <div className="h-full overflow-hidden rounded-[6px] border border-line bg-surface">
                 <Clip {...r.clip} />
                 <div className="p-5">
@@ -107,6 +104,14 @@ function Overview() {
               </div>
             </Reveal>
           ))}
+          <Reveal delay={0.4} className="sm:col-span-2 lg:col-span-4">
+            <p className="flex items-start gap-3 text-lead leading-snug font-semibold tracking-[-0.01em] text-ink lg:pl-4">
+              <ArrowRight aria-hidden className="mt-[0.3em] hidden size-5 shrink-0 text-blue lg:block" />
+              <span>
+                <Em text={d.gap} />
+              </span>
+            </p>
+          </Reveal>
         </div>
       </div>
 
