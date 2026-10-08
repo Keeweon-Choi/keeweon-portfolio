@@ -110,7 +110,8 @@ function studio() {
 function shadowTexture() {
   const c = document.createElement('canvas')
   c.width = c.height = 128
-  const g = c.getContext('2d')
+  // CPU 쪽 캔버스로 그려야 텍스처로 올릴 때 GPU에서 다시 읽지 않는다 (GPU stall 경고 방지)
+  const g = c.getContext('2d', { willReadFrequently: true })
   if (g) {
     const r = g.createRadialGradient(64, 64, 0, 64, 64, 64)
     r.addColorStop(0, 'rgba(23,35,49,0.2)')

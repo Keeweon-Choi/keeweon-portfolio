@@ -102,6 +102,18 @@ export function GlassGuide() {
   const reduce = !!useReducedMotion()
   const live = useLive(stageRef)
   const near = useInView(stageRef, { once: true, margin: '400px 0px' })
+  // 3D 준비(셰이더 컴파일 등)는 한 번 메인 스레드를 수백 ms 붙잡는다 → 스크롤 도중이 아니라
+  // 페이지를 연 직후 한가한 때(보통 표지에 있을 때) 미리 해 둔다. 가까워지면 바로.
+  const [idle, setIdle] = useState(false)
+  useEffect(() => {
+    if (typeof requestIdleCallback === 'function') {
+      const id = requestIdleCallback(() => setIdle(true), { timeout: 2500 })
+      return () => cancelIdleCallback(id)
+    }
+    const id = setTimeout(() => setIdle(true), 1200)
+    return () => clearTimeout(id)
+  }, [])
+  const start = near || idle
   // 3D가 준비된 뒤(또는 사진으로 대신한 뒤)에 시계를 시작 → 첫 단계를 건너뛰지 않는다
   const loop = useLoop(live && (ready || failed), LOOP)
   const time = useTransform(loop, (v) => (reduce ? STILL : (v % 1) * LOOP))
@@ -123,7 +135,7 @@ export function GlassGuide() {
   })
 
   useEffect(() => {
-    if (!near) return
+    if (!start) return
     let dead = false
     let scene: GuideScene | undefined
     import('./scene')
@@ -148,7 +160,7 @@ export function GlassGuide() {
       scene?.dispose()
       sceneRef.current = null
     }
-  }, [near, time, reduce])
+  }, [start, time, reduce])
 
   const stage = Math.floor(step / 4)
   const phase = step % 4
