@@ -238,14 +238,14 @@ export const guide = {
     { key: '중심에 가까울수록', to: '양쪽 진동이 강하게', note: '시점이 박스 중심에 가까워지면 양쪽이 함께, 맞춰지면 가장 강하게' },
     { key: '거리', to: '음성 (TTS)', note: '카메라와 초음파 거리 센서로 판단한 거리를 음성으로 안내' },
   ],
-  // smartGlass.usage와 같은 순서: 단계마다 찾는 목표
+  // smartGlass.usage와 같은 순서: 단계마다 찾는 목표. box = 카메라 장면(1600×400, components/glass/views)에서의 위치
   targets: [
-    { name: '버스', side: 'L' },
-    { name: '승차문', side: 'R' },
-    { name: '카드단말기', side: 'L' },
-    { name: '빈 좌석', side: 'R' },
-    { name: '하차벨', side: 'L' },
-  ] satisfies { name: string; side: 'L' | 'R' }[],
+    { name: '버스', side: 'L', box: { x: 532, y: 160, w: 536, h: 202 } },
+    { name: '승차문', side: 'R', box: { x: 735, y: 32, w: 130, h: 340 } },
+    { name: '카드단말기', side: 'L', box: { x: 758, y: 166, w: 84, h: 108 } },
+    { name: '빈 좌석', side: 'R', box: { x: 740, y: 190, w: 120, h: 150 } },
+    { name: '하차벨', side: 'L', box: { x: 780, y: 210, w: 40, h: 44 } },
+  ] satisfies { name: string; side: 'L' | 'R'; box: { x: number; y: number; w: number; h: number } }[],
   view: { label: 'Camera view', center: '시점 = 화면 중심' },
   voice: '거리 음성 안내',
   pins: { camera: 'Camera', sensor: 'Distance Sensor', L: 'Vibration L', R: 'Vibration R' },

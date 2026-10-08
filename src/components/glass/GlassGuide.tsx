@@ -24,10 +24,12 @@ import { useLive, useLoop } from '../fx/loop'
 import { Reveal } from '../motion'
 import { Em, Label } from '../ui'
 import type { GuideScene, Pin, Pose } from './scene'
+import { Bell, Door, Reader, Seats, Street } from './views'
 
 const icons = { bus: Bus, door: DoorOpen, card: CreditCard, seat: Armchair, bell: BellRing }
 const legendIcons = [Vibrate, Crosshair, Volume2]
 const n = d.usage.length
+const scenes = [Street, Door, Reader, Seats, Bell] // usage와 같은 순서
 
 /*
  * 한 단계(T초): 탐색 → 박스 등장(중심에서 벗어난 쪽만 진동) → 머리를 돌려 박스가 중심으로
@@ -314,57 +316,155 @@ export function GlassGuide() {
 
 /** 카메라 화면: 가운데 고정 표시 = 사용자 시점. 박스가 중심으로 다가오고, 양옆 막대가 좌우 진동 세기 */
 function CameraView({ time, stage, phase }: { time: MotionValue<number>; stage: number; phase: number }) {
-  const left = useTransform(time, (t) => `${50 + guideAt(t).offset * 38}%`)
-  const L = useTransform(time, (t) => guideAt(t).L)
-  const R = useTransform(time, (t) => guideAt(t).R)
+  // 머리를 돌리면 장면이 좌우로 밀린다: 목표(장면 가운데)가 화면의 50 + offset·38 % 자리에 오도록.
+  // 장면 폭 = 화면의 2배 → translateX(%)는 장면 자기 폭 기준이라 /2
+  const x = useTransform(time, (t) => `${((0.5 + guideAt(t).offset * 0.38 - 1) / 2) * 100}%`)
+  // 거리뷰의 방위 눈금처럼: 장면과 같이 움직이는 눈금, 가운데 표시는 고정
+  const tape = useTransform(time, (t) => `${guideAt(t).offset * 38}%`)
+  // 진동이 울리는 쪽 화면 가장자리가 맥박처럼 빛난다 (세기 × 빠른 맥동)
+  const edgeL = useTransform(time, (t) => guideAt(t).L * (0.4 + 0.3 * Math.sin(t * 26)))
+  const edgeR = useTransform(time, (t) => guideAt(t).R * (0.4 + 0.3 * Math.sin(t * 26 + 1)))
   const Icon = icons[d.usage[stage].icon]
   const close = phase >= 2
+  const { box: b } = g.targets[stage]
+  const inside = b.y < 60 // 박스가 화면 위쪽 끝이면 라벨을 박스 안에
   return (
-    <div className="mx-auto max-w-[36rem]">
+    <div className="mx-auto max-w-[40rem]">
       {/* 가운데 라벨은 시점 표시 바로 위에 온다 */}
       <p className="grid grid-cols-[1fr_auto_1fr] gap-2 px-6 text-note text-muted">
         <span className="font-mono">{g.view.label}</span>
         <span>{g.view.center}</span>
       </p>
       <div className="mt-1.5 flex items-stretch gap-2.5">
-        <Meter level={L} label="L" />
-        <div className="relative aspect-[3/1] flex-1 overflow-hidden rounded-[6px] border border-line-strong bg-canvas">
+        <Motor time={time} side="L" />
+        <div className="relative aspect-[2/1] flex-1 overflow-hidden rounded-[6px] border border-line-strong bg-[#dfe6ec]">
+          <motion.div style={{ x }} className="absolute inset-y-0 left-0 w-[200%] will-change-transform">
+            {/* 다섯 장면을 겹쳐 두고 단계가 바뀌면 교차 페이드 (다시 그리지 않아 깜빡이지 않는다) */}
+            {scenes.map((Scene, i) => (
+              <svg
+                key={i}
+                viewBox="0 0 1600 400"
+                className={`absolute inset-0 size-full transition-opacity duration-300 ${i === stage ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <Scene />
+              </svg>
+            ))}
+            {/* 탐지한 목표의 박스: 장면에 붙어 함께 움직인다 */}
+            <div
+              style={{ left: `${b.x / 16}%`, top: `${b.y / 4}%`, width: `${b.w / 16}%`, height: `${b.h / 4}%` }}
+              className={`absolute rounded-[3px] border-2 border-sky bg-sky/10 shadow-[0_0_0_1px_rgba(23,35,49,0.45)] transition-opacity duration-300 ${
+                phase ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <span
+                className={`absolute -left-0.5 flex items-center gap-1 rounded-[3px] bg-blue px-1.5 py-0.5 text-note leading-none font-medium whitespace-nowrap text-white ${
+                  inside ? 'top-1 left-1' : '-top-0.5 -translate-y-full rounded-b-none'
+                }`}
+              >
+                <Icon className="size-3.5" strokeWidth={2} />
+                {g.targets[stage].name}
+              </span>
+              <span className="absolute top-1/2 left-1/2 size-1.5 -translate-1/2 rounded-full bg-sky" />
+            </div>
+          </motion.div>
+          {/* 카메라 화면 느낌: 가장자리 어둡게 */}
+          <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(10,18,28,0.35))]" />
+          {/* 방위 눈금 */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-5 overflow-hidden bg-ink/35">
+            <motion.div style={{ x: tape }} className="absolute inset-y-0 -inset-x-full">
+              {Array.from({ length: 31 }, (_, i) => (
+                <span
+                  key={i}
+                  className={`absolute bottom-0 w-px bg-white/70 ${i % 5 ? 'h-1.5' : 'h-3'}`}
+                  style={{ left: `${(i / 30) * 100}%` }}
+                />
+              ))}
+            </motion.div>
+            <span className="absolute bottom-0 left-1/2 size-0 -translate-x-1/2 border-x-[5px] border-b-[6px] border-x-transparent border-b-white" />
+          </div>
+          <motion.span
+            style={{ opacity: edgeL }}
+            className="pointer-events-none absolute inset-y-0 left-0 w-1/5 bg-linear-to-r from-sky/80 to-transparent"
+          />
+          <motion.span
+            style={{ opacity: edgeR }}
+            className="pointer-events-none absolute inset-y-0 right-0 w-1/5 bg-linear-to-l from-sky/80 to-transparent"
+          />
+          {/* 맞춰지면 거리를 음성으로: 스피커 + 소리 파형 */}
+          {phase === 3 && (
+            <span className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-ink/70 px-2.5 py-1.5">
+              <Volume2 aria-hidden className="size-4 text-white" strokeWidth={2} />
+              <Wave time={time} />
+            </span>
+          )}
           {/* 고정된 시점: 화면 정중앙 */}
-          <span className="absolute top-1/2 left-1/2 h-px w-12 -translate-1/2 bg-ink/35" />
-          <span className="absolute top-1/2 left-1/2 h-12 w-px -translate-1/2 bg-ink/35" />
+          <span className="absolute top-1/2 left-1/2 h-px w-12 -translate-1/2 bg-white/85 shadow-[0_0_0_1px_rgba(23,35,49,0.35)]" />
+          <span className="absolute top-1/2 left-1/2 h-12 w-px -translate-1/2 bg-white/85 shadow-[0_0_0_1px_rgba(23,35,49,0.35)]" />
           <span
             className={`absolute top-1/2 left-1/2 size-4 -translate-1/2 rounded-full border-2 transition-colors duration-300 ${
-              close ? 'border-blue ring-4 ring-sky/40' : 'border-ink/70'
+              close ? 'border-sky ring-4 ring-sky/50' : 'border-white'
             }`}
           />
-          {/* 탐지한 목표의 박스 */}
-          <motion.div
-            style={{ left }}
-            className={`absolute top-[30%] h-[54%] w-[17%] -translate-x-1/2 rounded-[3px] border-2 border-blue bg-sky-pale/40 transition-opacity duration-300 ${
-              phase ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <span className="absolute -top-0.5 -left-0.5 flex -translate-y-full items-center gap-1 rounded-t-[3px] bg-blue px-1.5 py-0.5 text-note leading-none font-medium whitespace-nowrap text-white">
-              <Icon className="size-3.5" strokeWidth={2} />
-              {g.targets[stage].name}
-            </span>
-            <span className="absolute top-1/2 left-1/2 size-1.5 -translate-1/2 rounded-full bg-blue" />
-          </motion.div>
         </div>
-        <Meter level={R} label="R" />
+        <Motor time={time} side="R" />
       </div>
     </div>
   )
 }
 
-/** 진동 세기 막대 (숫자 없이 높이로만) */
-function Meter({ level, label }: { level: MotionValue<number>; label: string }) {
+/**
+ * 진동 모터: 세기만큼 몸체가 떨리고, 바깥쪽으로 물결이 퍼진다(세질수록 크고 진하게).
+ * 시계(time)에서 바로 계산해 3D · 카메라 화면과 어긋나지 않는다
+ */
+function Motor({ time, side }: { time: MotionValue<number>; side: 'L' | 'R' }) {
+  const dir = side === 'L' ? -1 : 1
+  const shake = useTransform(time, (t) => Math.sin(t * 95) * guideAt(t)[side] * 2.4)
+  const body = useTransform(time, (t) => 0.3 + 0.7 * guideAt(t)[side])
   return (
-    <div className="flex w-4 flex-col items-center gap-1">
-      <span className="relative w-1.5 flex-1 overflow-hidden rounded-full bg-line">
-        <motion.span style={{ scaleY: level }} className="absolute inset-0 origin-bottom rounded-full bg-blue" />
-      </span>
-      <span className="font-mono text-note leading-none text-muted">{label}</span>
+    <div className="relative flex w-11 flex-col items-center justify-center gap-1.5">
+      <div className="relative grid h-16 w-full place-items-center">
+        {[0, 1, 2].map((k) => (
+          <Ripple key={k} time={time} side={side} k={k} />
+        ))}
+        <motion.span style={{ x: shake, opacity: body }} className="relative h-10 w-3.5 rounded-full bg-blue" />
+      </div>
+      <span className="font-mono text-note leading-none text-muted">{side}</span>
+      <span className="sr-only">{dir < 0 ? '왼쪽' : '오른쪽'} 진동 모터</span>
     </div>
   )
+}
+
+/** 모터 바깥쪽으로 퍼지는 물결 하나 (세 개가 1/3씩 어긋나 이어진다) */
+function Ripple({ time, side, k }: { time: MotionValue<number>; side: 'L' | 'R'; k: number }) {
+  const dir = side === 'L' ? -1 : 1
+  const p = useTransform(time, (t) => (t * 2.4 + k / 3) % 1)
+  const x = useTransform(p, (v) => dir * (7 + v * 13))
+  const opacity = useTransform(time, (t) => (1 - ((t * 2.4 + k / 3) % 1)) * Math.min(1, guideAt(t)[side] * 1.5))
+  const scale = useTransform(time, (t) => 0.7 + ((t * 2.4 + k / 3) % 1) * (0.3 + guideAt(t)[side] * 0.6))
+  return (
+    <motion.svg
+      aria-hidden
+      viewBox="0 0 10 32"
+      style={{ x, opacity, scale, scaleX: dir }}
+      className="absolute h-12 w-3 text-blue"
+    >
+      <path d="M2 2 Q10 16 2 30" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+    </motion.svg>
+  )
+}
+
+/** 음성 안내 중인 소리 파형 (막대 4개가 엇갈려 오르내린다) */
+function Wave({ time }: { time: MotionValue<number> }) {
+  return (
+    <span aria-hidden className="flex h-4 items-center gap-[3px]">
+      {[0, 1, 2, 3].map((k) => (
+        <WaveBar key={k} time={time} k={k} />
+      ))}
+    </span>
+  )
+}
+
+function WaveBar({ time, k }: { time: MotionValue<number>; k: number }) {
+  const scaleY = useTransform(time, (t) => 0.35 + 0.65 * Math.abs(Math.sin(t * 9 + k * 1.3)))
+  return <motion.span style={{ scaleY }} className="h-full w-[3px] rounded-full bg-white" />
 }
