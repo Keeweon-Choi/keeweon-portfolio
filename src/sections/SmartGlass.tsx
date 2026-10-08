@@ -17,6 +17,7 @@ import { Tilt } from '../components/fx/Tilt'
 import { useCycle, useFlow, useLive, useLoop } from '../components/fx/loop'
 import { Reveal, Words } from '../components/motion'
 import { Em, Label, TechDetail, Title } from '../components/ui'
+import { Viewfinder } from '../components/Viewfinder'
 import { redesign as r, smartGlass as d, type PipelineNode, type Tone } from '../data/projects'
 import { asset, ease } from '../lib/util'
 
@@ -385,7 +386,7 @@ function Story() {
           ))}
         </div>
         <div className="hidden lg:col-span-7 lg:block">
-          <div className="sticky top-[max(5rem,calc(50vh-17rem))]">
+          <div className="sticky top-[max(4.5rem,calc(50vh-23rem))]">
             <Panel state={r.story[active].state} onPick={pick} />
           </div>
         </div>
@@ -487,12 +488,15 @@ function Panel({ state, onPick }: { state: number; onPick?: (state: number) => v
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-[clamp(1.25rem,4vh,2.25rem)] grid items-end gap-x-8 gap-y-4 border-t border-line pt-5 sm:grid-cols-[auto_1fr]">
-        <FpsNumber state={state} />
-        <div>
-          <FrameStrip key={state} state={state} live={live} />
-          <p className="mt-2 text-note text-muted">{r.stripLabel}</p>
+      <div className="mt-3 grid items-end gap-x-6 gap-y-4 border-t border-line pt-3 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <div className="flex flex-col justify-end gap-4">
+          <FpsNumber state={state} />
+          <div>
+            <FrameStrip key={state} state={state} live={live} />
+            <p className="mt-2 text-note text-muted">{r.stripLabel}</p>
+          </div>
         </div>
+        <Viewfinder state={state} fps={s.lit} />
       </div>
     </div>
   )
